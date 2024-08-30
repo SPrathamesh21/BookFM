@@ -1,13 +1,26 @@
 import { useState } from 'react'
-
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import Home from './User/Pages/Home'
+import Header from './User/Components/Header'
 
 function App() {
   
   return (
     <>
-      <h1>Hello World!</h1>
+    <Routes>
+      <Route path='/' element={<Home />} />
+      <Route path='/header' element={<Header />} />
+    </Routes>
     </>
   )
 }
 
-export default App
+
+function AppWrapper(){
+  return (
+    <Router>
+      <App />
+    </Router>
+  )
+}
+export default AppWrapper
