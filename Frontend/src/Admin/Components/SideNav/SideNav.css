@@ -1,0 +1,103 @@
+/* SideNav.css */
+
+/* Add a unique class for the SideNav component */
+.side-nav-container {
+  text-align: center; /* Center text alignment */
+}
+
+/* Side navigation initial and expanded width */
+.side-nav-container .w-side {
+  width: 250px; /* Initial width */
+  overflow: hidden; /* Hide any overflow during animation */
+  transition: width 0.6s ease-in-out; /* Smooth transition for width */
+}
+
+/* Expanded width on animation */
+.side-nav-container.expanded .w-side {
+  width: 300px; /* Expanded width */
+}
+
+/* Background color for the side navigation */
+.side-nav-container .bg-sky-900 {
+  background-color: #0284c7; /* Sky blue background */
+}
+
+/* White text color */
+.side-nav-container .text-white {
+  color: #ffffff; /* White text color */
+}
+
+/* Full viewport height for side navigation */
+.side-nav-container .h-screen {
+  height: 100vh; /* Full viewport height */
+}
+
+/* Remove default list styles */
+.side-nav-container ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0; /* Ensure no extra margin */
+}
+
+/* Space between list items */
+.side-nav-container li {
+  margin-bottom: 0.5rem; /* Reduced space between list items */
+}
+
+/* Link styling */
+.side-nav-container a {
+  display: flex;
+  align-items: center;
+  color: #ffffff; /* White text color */
+  text-decoration: none; /* Remove underline from links */
+  transition: background-color 0.3s ease, padding 0.3s ease; /* Smooth transition for background color and padding */
+  padding: 0.5rem 1rem; /* Consistent padding */
+  border-radius: 0.25rem; /* Rounded corners */
+}
+
+/* Link hover effect */
+.side-nav-container a:hover {
+  background-color: #0b6ea3; /* Light blue background on hover */
+  color: #ffffff; /* Ensure text color stays white */
+  padding-left: 1.5rem; /* Increased padding for hover effect */
+}
+
+/* Margin-right for icons */
+.side-nav-container .mr-2 {
+  margin-right: 1rem; /* Adjusted margin for icons */
+}
+
+/* Style for horizontal rule */
+.side-nav-container hr {
+  height: 1px; /* Line height */
+  background-color: #ffffff; /* White color */
+  margin: 0.5rem 0; /* Margin for spacing */
+  border: none; /* Remove default border */
+}
+
+/* Side navigation slide-in animation */
+
+
+/* Icon hover animation */
+.side-nav-container .icon {
+  transition: transform 0.9s ease; /* Smooth icon transform transition */
+}
+
+.side-nav-container .icon:hover {
+  transform: scale(1.2);
+}
+
+@keyframes slideInFromLeft {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.side-nav {
+  animation: slideInFromLeft 2s ease-out;
+}

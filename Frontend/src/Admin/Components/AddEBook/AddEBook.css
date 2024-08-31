@@ -1,0 +1,48 @@
+/* Dropdown button and menu styles */
+.dropdown-button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    cursor: pointer;
+  }
+  
+  /* Dropdown menu styles */
+  .dropdown-menu {
+    display: none;
+    position: absolute;
+    z-index: 10;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-top: 0.25rem; /* space between button and menu */
+  }
+  
+  .dropdown-menu.open {
+    display: block;
+  }
+  
+  /* Arrow rotation animation */
+  .dropdown-button svg {
+    transition: transform 0.3s ease;
+  }
+  
+  .dropdown-button svg.rotate-180 {
+    transform: rotate(180deg);
+  }
+  
+  /* Dropdown item styles */
+  .dropdown-menu li button {
+    display: block;
+    width: 100%;
+    padding: 0.5rem 1rem;
+    text-align: left;
+    background: white;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .dropdown-menu li button:hover {
+    background: #f0f0f0;
+  }
+  

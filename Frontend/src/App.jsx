@@ -2,17 +2,23 @@ import { useState } from 'react'
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import Home from './User/Pages/Home'
 import Header from './User/Components/Header'
+import React from "react";
 
+import DefaultAdminPage from "../src/Admin/Pages/DefaultAdminPage"
 function App() {
   
   return (
     <>
-    <Routes>
+      <Routes>
       <Route path='/' element={<Home />} />
       <Route path='/header' element={<Header />} />
-    </Routes>
+       <Route path="/admin_panel/*" element={<DefaultAdminPage />} />
+        </Routes>
+
+     
+
     </>
-  )
+  );
 }
 
 
