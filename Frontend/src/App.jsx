@@ -5,10 +5,13 @@ import Header from './User/Components/Header'
 import React from "react";
 import MobileHeader from './User/Components/MobileHeader';
 import Footer from './User/Components/Footer';
-
-
 import DefaultAdminPage from "../src/Admin/Pages/DefaultAdminPage"
 import ExpandedView from './User/Components/expandedView';
+import Discover from './User/Pages/Discover';
+import Signup from './User/Pages/Signup';
+import Login from './User/Pages/Login';
+
+
 function App() { 
   const [isMobile, setIsMobile] = useState(false); 
   useEffect(() => {
@@ -37,6 +40,9 @@ function App() {
 
       <Routes>
       <Route path='/' element={<Home />} />
+      <Route path='/discover' element={<Discover />} />
+      <Route path='/signup' element={<Signup />} />
+      <Route path='/login' element={<Login />} />
       <Route path='/header' element={<Header />} />
       <Route path='/expanded' element={<ExpandedView />} />
 

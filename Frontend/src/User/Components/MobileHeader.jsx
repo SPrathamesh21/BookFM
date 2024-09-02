@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { FaSearch, FaBell } from 'react-icons/fa';
 import NotificationModal from './NotificationModal';
 
+
 function MobileHeader() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -18,9 +19,9 @@ function MobileHeader() {
           BookFM
         </Link>
         <div className="flex items-center space-x-4">
-          <Link to="/browse" className="text-lg text-teal-400">
-            Browse
-          </Link>
+        <Link to="/discover" className="bg-teal-400 p-2 px-4 text-black rounded-md font-bold tracking-[0.2rem] hover:bg-teal-500">
+          Discover
+        </Link>
           <div className="relative cursor-pointer" onClick={handleNotificationClick}>
             <FaBell className="text-teal-400 text-2xl" />
             {notificationCount > 0 && (
