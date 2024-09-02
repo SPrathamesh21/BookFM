@@ -36,7 +36,7 @@ const SideNav = () => {
         <AnimatedIcon icon={faHome} label="Home Admin" to="/admin_panel" />
         <hr />
   
-        <AnimatedIcon icon={faPlus} label="Add Audio" to="/admin_panel/AddEBook" />
+        <AnimatedIcon icon={faPlus} label="Add E-Book" to="/admin_panel/AddEBook" />
         <hr />
 
       </ul>
