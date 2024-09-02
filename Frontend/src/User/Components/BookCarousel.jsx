@@ -51,18 +51,21 @@ const BookCarousel = ({ books }) => {
         breakpoint: 1024,
         settings: {
           slidesToShow: 4,
+          slidesToScroll: 3,
         },
       },
       {
         breakpoint: 768,
         settings: {
           slidesToShow: 3,
+          slidesToScroll: 3,
         },
       },
       {
         breakpoint: 480,
         settings: {
           slidesToShow: 2,
+          slidesToScroll: 2,
         },
       },
     ],
@@ -75,7 +78,7 @@ const BookCarousel = ({ books }) => {
         {books.map((book) => (
           <div key={book._id} className="px-3" onClick={() => handleBookClick(book._id)}>
             <div className="bg-gray-700 shadow-lg rounded-lg overflow-hidden transform transition-transform hover:scale-95 hover:shadow-2xl cursor-pointer z-10">
-              <img src={book.coverImages[0]} alt={book.bookName} className="w-full h-60 object-cover" />
+              <img src={book.coverImages[0]} alt={book.bookName} className="w-full h-48 md:h-60 object-cover" />
               <div className="p-4">
                 <h3 className="text-xl font-semibold text-teal-400">{book.bookName}</h3>
                 <p className="text-gray-400 mt-2">{book.author}</p>

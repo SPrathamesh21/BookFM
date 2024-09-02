@@ -52,7 +52,6 @@ function App() {
   );
 }
 
-
 function AppWrapper(){
   return (
     <Router>
