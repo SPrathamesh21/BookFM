@@ -1,25 +1,5 @@
 import React from 'react';
 
-// const ExpandedView = () => {
-//     return (
-//         <div style={styles.container}>
-//             <img 
-//                 src="https://via.placeholder.com/300x400" 
-//                 alt="Book Cover" 
-//                 style={styles.coverImage}
-//             />
-//             <div style={styles.details}>
-//                 <h2 style={styles.title}>Book Name</h2>
-//                 <h4 style={styles.author}>by Author Name</h4>
-//                 <p style={styles.description}>
-//                     This is a brief description of the book. It gives a short overview of the plot, themes, and any other relevant information.
-//                 </p>
-//                 <p style={styles.timeToRead}>Usual time to read: 5 hours</p>
-//             </div>
-//         </div>
-//     );
-// };
-
 const styles = {
     container: {
         display: 'flex',

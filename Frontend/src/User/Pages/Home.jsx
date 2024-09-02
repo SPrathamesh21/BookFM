@@ -1,6 +1,6 @@
 import React from 'react';
 import BookCarousel from '../Components/BookCarousel';
-
+import '../../Style/BookCarousel.css'
 function Home() {
   const handleCategoryClick = (category) => {
     alert(`Selected category: ${category}`);
@@ -33,13 +33,18 @@ function Home() {
 
       {/* Hero Section */}
       <main className="flex-grow">
-        <section className="bg-gray-900 py-16 text-center">
-          <h1 className="text-5xl font-bold mb-6 text-teal-400">Discover Your Next Great Read</h1>
-          <p className="text-xl mb-8">Explore a vast collection of ebooks from various genres.</p>
-          <button className="bg-teal-400 text-gray-900 py-2 px-6 rounded-full text-lg font-semibold hover:bg-teal-300">
-            Start Reading
-          </button>
-        </section>
+      <section className="bg-gray-900 py-16 text-center">
+        <h1 className="text-[25px] md:text-5xl font-bold mb-6 text-teal-400">
+          Discover Your Next Great Read
+        </h1>
+        <p className="text-lg mb-8">
+          Explore a vast collection of ebooks <span className="inline-block md:hidden"><br /></span>from various genres.
+        </p>
+        <button className="bg-teal-400 text-gray-900 py-2 px-6 rounded-full text-lg font-semibold hover:bg-teal-300 animation-zoom transform transition-none hover:animate-none">
+          Start Reading
+        </button>
+      </section>
+
 
         {/* Book Carousel Section */}
         <BookCarousel books={books} />
@@ -49,7 +54,7 @@ function Home() {
         <BookCarousel books={books} />
         <BookCarousel books={books} />
       </main>
-
+      
     </div>
   );
 }

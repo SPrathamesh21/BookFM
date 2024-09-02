@@ -33,16 +33,13 @@ function Header() {
 
       {/* Navigation and Notifications */}
       <div className="flex items-center space-x-4">
-        <nav className="flex space-x-4">
-          <Link to="/" className={`hover:text-teal-400 ${currentPath === '/' ? 'text-teal-400' : ''}`}>
-            Home
-          </Link>
-          <Link to="/browse" className={`hover:text-teal-400 ${currentPath === '/browse' ? 'text-teal-400' : ''}`}>
-            Browse
-          </Link>
-          <Link to="/signup" className={`hover:text-teal-400 ${currentPath === '/signup' ? 'text-teal-400' : ''}`}>
-            Sign Up
-          </Link>
+        <nav>
+          <Link to="/discover" className="mx-3 tracking-[0.2rem] bg-teal-400 p-2 px-4 text-black rounded-md font-bold hover:bg-teal-500">
+          Discover
+        </Link>
+        <Link to="/signup" className="mx-3 hover:text-teal-400">
+          Sign Up
+        </Link>
         </nav>
 
         {/* Notifications */}
@@ -57,6 +54,7 @@ function Header() {
       </div>
 
       <NotificationModal isOpen={isModalOpen} onClose={handleCloseModal} />
+
     </header>
   );
 }
