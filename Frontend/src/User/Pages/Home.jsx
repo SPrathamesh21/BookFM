@@ -1,12 +1,28 @@
 import React from 'react';
 import Header from '../Components/Header';
 import Footer from '../Components/Footer';
-
+import MobileHeader from '../Components/MobileHeader';
 function Home() {
+  const handleCategoryClick = (category) => {
+    // Logic to filter and render books by category
+    alert(`Selected category: ${category}`);
+  };
   return (
     <div className="min-h-screen bg-gray-800 text-gray-100 flex flex-col">
-      <Header />
 
+
+        {/* Categories Bar */}
+        <section className="bg-gray-800 text-gray-100 p-4 overflow-x-auto whitespace-nowrap">
+        {["Fiction", "Non-Fiction", "Mystery", "Romance", "Sci-Fi", "Fantasy"].map((category) => (
+          <button 
+            key={category} 
+            className="inline-block px-4 py-2 mx-2 bg-gray-700 text-teal-400 rounded-full hover:bg-teal-400 hover:text-gray-900"
+            onClick={() => handleCategoryClick(category)}
+          >
+            {category}
+          </button>
+        ))}
+      </section>
       {/* Hero Section */}
       <main className="flex-grow">
         <section className="bg-gray-900 py-16 text-center">
@@ -34,7 +50,7 @@ function Home() {
         </section>
       </main>
 
-      <Footer />
+
     </div>
   );
 }

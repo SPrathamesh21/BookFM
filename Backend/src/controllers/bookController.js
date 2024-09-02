@@ -29,6 +29,7 @@ const addBook = async (req, res) => {
     // Upload PDF to GridFS
     const bucket = new GridFSBucket(mongoose.connection.db, {
       bucketName: 'pdfs',
+      chunkSizeBytes: 15 * 1024 * 1024
     });
 
     const uploadStream = bucket.openUploadStream(pdfFile.originalname);
