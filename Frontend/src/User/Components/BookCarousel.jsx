@@ -1,10 +1,17 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate for navigation
 import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import '../../Style/BookCarousel.css';
 
 const BookCarousel = ({ books }) => {
+  const navigate = useNavigate(); // Initialize useNavigate hook
+
+  const handleBookClick = (bookId) => {
+    navigate(`/book/${bookId}`); // Navigate to the new page with the book ID
+  };
+
   const CustomPrevArrow = (props) => {
     const { className, onClick } = props;
     return (
@@ -36,7 +43,7 @@ const BookCarousel = ({ books }) => {
     infinite: true,
     speed: 500,
     slidesToShow: 6,
-    slidesToScroll: 1,
+    slidesToScroll: 3,
     nextArrow: <CustomNextArrow />,
     prevArrow: <CustomPrevArrow />,
     responsive: [
@@ -66,11 +73,11 @@ const BookCarousel = ({ books }) => {
       <h2 className="text-3xl font-semibold mb-8 text-teal-400">Featured Books</h2>
       <Slider {...settings}>
         {books.map((book) => (
-          <div key={book.id} className="px-3">
+          <div key={book._id} className="px-3" onClick={() => handleBookClick(book._id)}>
             <div className="bg-gray-700 shadow-lg rounded-lg overflow-hidden transform transition-transform hover:scale-95 hover:shadow-2xl cursor-pointer z-10">
-              <img src={book.cover} alt={book.title} className="w-full h-60 object-cover" />
+              <img src={book.coverImages[0]} alt={book.bookName} className="w-full h-60 object-cover" />
               <div className="p-4">
-                <h3 className="text-xl font-semibold text-teal-400">{book.title}</h3>
+                <h3 className="text-xl font-semibold text-teal-400">{book.bookName}</h3>
                 <p className="text-gray-400 mt-2">{book.author}</p>
               </div>
             </div>

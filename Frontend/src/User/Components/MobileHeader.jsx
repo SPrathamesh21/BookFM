@@ -7,7 +7,7 @@ import NotificationModal from './NotificationModal';
 function MobileHeader() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const notificationCount = 9;
+  const notificationCount = 10;
 
   const handleNotificationClick = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);

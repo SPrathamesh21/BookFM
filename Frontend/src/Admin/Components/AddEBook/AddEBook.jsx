@@ -100,7 +100,7 @@ function AddBook() {
         },
         timeout: 60000 * 2, // 2 minutes timeout
       });
-
+      alert('book added successfully!')
       toast.success('Book added successfully!');
     } catch (error) {
       toast.error(`Error adding the book: ${error.response?.data?.error || 'Unknown error'}`);

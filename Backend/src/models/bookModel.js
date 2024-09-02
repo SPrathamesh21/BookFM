@@ -4,12 +4,12 @@ const bookSchema = new mongoose.Schema({
   bookName: { type: String, required: true },
   author: { type: String, required: true },
   description: { type: String, required: true },
-  category: { type: String, required: true }, // Added category field
+  category: { type: String, required: true },
   dateAdded: { type: Date, required: true },
-  coverImages: [String], // Array of Base64-encoded image strings
-  EPUBbase64: { type: mongoose.Schema.Types.ObjectId, ref: 'epubs' } // GridFS ObjectId reference for EPUB
+  coverImages: [String],
+  EPUBbase64: { type: mongoose.Schema.Types.ObjectId, ref: 'epubs' }
 });
 
-const Book = mongoose.model('Book', bookSchema);
+const Book = mongoose.models.Book || mongoose.model('Book', bookSchema);
 
 module.exports = Book;

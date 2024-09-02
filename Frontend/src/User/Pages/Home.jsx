@@ -1,19 +1,28 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import axios from '../../../axiosConfig';
 import BookCarousel from '../Components/BookCarousel';
-import '../../Style/BookCarousel.css'
+import '../../Style/BookCarousel.css';
+
 function Home() {
+  const [books, setBooks] = useState([]);
+
+  useEffect(() => {
+    // Fetch books data from the backend
+    const fetchBooks = async () => {
+      try {
+        const response = await axios.get('/get-books'); 
+        setBooks(response.data);
+      } catch (error) {
+        console.error('Error fetching books:', error);
+      }
+    };
+
+    fetchBooks();
+  }, []);
+
   const handleCategoryClick = (category) => {
     alert(`Selected category: ${category}`);
   };
-
-  const books = [
-    { id: 1, title: 'Book Title 1', author: 'Author Name', cover: 'https://via.placeholder.com/150' },
-    { id: 2, title: 'Book Title 2', author: 'Author Name', cover: 'https://via.placeholder.com/150' },
-    { id: 3, title: 'Book Title 3', author: 'Author Name', cover: 'https://via.placeholder.com/150' },
-    { id: 4, title: 'Book Title 4', author: 'Author Name', cover: 'https://via.placeholder.com/150' },
-    { id: 5, title: 'Book Title 5', author: 'Author Name', cover: 'https://via.placeholder.com/150' },
-    { id: 6, title: 'Book Title 6', author: 'Author Name', cover: 'https://via.placeholder.com/150' },
-  ];
 
   return (
     <div className="min-h-screen bg-gray-800 text-gray-100 flex flex-col">
@@ -33,25 +42,19 @@ function Home() {
 
       {/* Hero Section */}
       <main className="flex-grow">
-      <section className="bg-gray-900 py-16 text-center">
-        <h1 className="text-[25px] md:text-5xl font-bold mb-6 text-teal-400">
-          Discover Your Next Great Read
-        </h1>
-        <p className="text-lg mb-8">
-          Explore a vast collection of ebooks <span className="inline-block md:hidden"><br /></span>from various genres.
-        </p>
-        <button className="bg-teal-400 text-gray-900 py-2 px-6 rounded-full text-lg font-semibold hover:bg-teal-300 animation-zoom transform transition-none hover:animate-none">
-          Start Reading
-        </button>
-      </section>
-
+        <section className="bg-gray-900 py-16 text-center">
+          <h1 className="text-[25px] md:text-5xl font-bold mb-6 text-teal-400">
+            Discover Your Next Great Read
+          </h1>
+          <p className="text-lg mb-8">
+            Explore a vast collection of ebooks <span className="inline-block md:hidden"><br /></span>from various genres.
+          </p>
+          <button className="bg-teal-400 text-gray-900 py-2 px-6 rounded-full text-lg font-semibold hover:bg-teal-300 animation-zoom transform transition-none hover:animate-none">
+            Start Reading
+          </button>
+        </section>
 
         {/* Book Carousel Section */}
-        <BookCarousel books={books} />
-        <BookCarousel books={books} />
-        <BookCarousel books={books} />
-        <BookCarousel books={books} />
-        <BookCarousel books={books} />
         <BookCarousel books={books} />
       </main>
       

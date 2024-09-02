@@ -10,7 +10,7 @@ function Header() {
   const currentPath = location.pathname;
 
   // Sample notification count
-  const notificationCount = 9;
+  const notificationCount = 10;
 
   const handleNotificationClick = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);

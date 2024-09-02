@@ -5,7 +5,7 @@ const dotenv = require('dotenv');
 const bookRoutes = require('./routes/bookRoutes');
 const { connectDB } = require('./config/db');
 const bodyParser = require('body-parser'); // Import body-parser
-
+const userBookRoutes = require('./routes/userBookRoutes')
 
 dotenv.config();
 const app = express();
@@ -28,6 +28,7 @@ app.use(bodyParser.urlencoded({ limit: '100mb', extended: true }));
 
 // Routes
 app.use('/api/books', bookRoutes);
+app.use('/', userBookRoutes)
 
 // Connect to MongoDB
 connectDB().then(() => {

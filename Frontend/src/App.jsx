@@ -39,16 +39,15 @@ function App() {
     {shouldShowHeader && (isMobile ? <MobileHeader /> : <Header />)}
 
       <Routes>
-      <Route path='/' element={<Home />} />
-      <Route path='/discover' element={<Discover />} />
-      <Route path='/signup' element={<Signup />} />
-      <Route path='/login' element={<Login />} />
-      <Route path='/header' element={<Header />} />
-      <Route path='/expanded' element={<ExpandedView />} />
-
-       <Route path="/admin_panel/*" element={<DefaultAdminPage />} />
-        </Routes>
-        {shouldShowFooter && <Footer />}
+        <Route path='/' element={<Home />} />
+        <Route path='/discover' element={<Discover />} />
+        <Route path='/signup' element={<Signup />} />
+        <Route path='/login' element={<Login />} />
+        <Route path='/header' element={<Header />} />
+        <Route path="/book/:bookId" element={<ExpandedView />} /> {/* New route */}
+        <Route path="/admin_panel/*" element={<DefaultAdminPage />} />
+      </Routes>
+    {shouldShowFooter && <Footer />}
     </>
   );
 }
