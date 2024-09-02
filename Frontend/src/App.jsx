@@ -8,6 +8,7 @@ import Footer from './User/Components/Footer';
 
 
 import DefaultAdminPage from "../src/Admin/Pages/DefaultAdminPage"
+import ExpandedView from './User/Components/expandedView';
 function App() { 
   const [isMobile, setIsMobile] = useState(false); 
   useEffect(() => {
@@ -37,6 +38,8 @@ function App() {
       <Routes>
       <Route path='/' element={<Home />} />
       <Route path='/header' element={<Header />} />
+      <Route path='/expanded' element={<ExpandedView />} />
+
        <Route path="/admin_panel/*" element={<DefaultAdminPage />} />
         </Routes>
         {shouldShowFooter && <Footer />}

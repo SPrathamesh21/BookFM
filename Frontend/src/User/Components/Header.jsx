@@ -1,16 +1,22 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { FaSearch } from 'react-icons/fa';
+import { Link, useLocation } from 'react-router-dom';
+import { FaSearch, FaBell } from 'react-icons/fa';
 
 function Header() {
+  const location = useLocation();
+  const currentPath = location.pathname;
+
+  // Sample notification count
+  const notificationCount = 9;
+
   return (
-    <header className="bg-gray-900 text-gray-100 w-full p-4 flex justify-between items-center shadow-md">
+    <header className="bg-gray-900 text-gray-100 w-full p-4 flex items-center justify-between shadow-md">
       <Link to="/" className="text-2xl font-bold text-teal-400">
         BookFM
       </Link>
 
       {/* Search Bar */}
-      <div className="relative w-1/3">
+      <div className="relative flex-grow max-w-md mx-4">
         <input
           type="text"
           placeholder="Search ebooks..."
@@ -19,17 +25,30 @@ function Header() {
         <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-teal-400" />
       </div>
 
-      <nav>
-        <Link to="/" className="mx-3 hover:text-teal-400">
-          Home
-        </Link>
-        <Link to="/browse" className="mx-3 hover:text-teal-400">
-          Browse
-        </Link>
-        <Link to="/signup" className="mx-3 hover:text-teal-400">
-          Sign Up
-        </Link>
-      </nav>
+      {/* Navigation Links and Notifications */}
+      <div className="flex items-center space-x-4">
+        <nav className="flex space-x-4">
+          <Link to="/" className={`hover:text-teal-400 ${currentPath === '/' ? 'text-teal-400' : ''}`}>
+            Home
+          </Link>
+          <Link to="/browse" className={`hover:text-teal-400 ${currentPath === '/browse' ? 'text-teal-400' : ''}`}>
+            Browse
+          </Link>
+          <Link to="/signup" className={`hover:text-teal-400 ${currentPath === '/signup' ? 'text-teal-400' : ''}`}>
+            Sign Up
+          </Link>
+        </nav>
+
+        {/* Notifications */}
+        <div className="relative">
+          <FaBell className="text-teal-400 text-2xl" />
+          {notificationCount > 0 && (
+            <span className="absolute top-0 right-0 inline-flex items-center justify-center w-5 h-5 text-xs font-semibold text-white bg-red-500 rounded-full transform translate-x-1/2 -translate-y-1/2">
+              {notificationCount}
+            </span>
+          )}
+        </div>
+      </div>
     </header>
   );
 }
