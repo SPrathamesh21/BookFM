@@ -8,12 +8,14 @@ function AddBook() {
     author: '',
     description: '',
     dateAdded: '',
+    category: '', // Added category field
   });
   const [coverImages, setCoverImages] = useState([]);
   const [coverImagePreviews, setCoverImagePreviews] = useState([]);
   const [file, setFile] = useState(null);
-  const [filePreview, setFilePreview] = useState(null);
+  const [fileName, setFileName] = useState(null); // For EPUB file name
   const [showImageInput, setShowImageInput] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Handle change in input fields
   const handleChange = (e) => {
@@ -30,16 +32,16 @@ function AddBook() {
     setShowImageInput(false);
   };
 
-  // Handle file input changes (for PDF or RTF files)
+  // Handle EPUB file input changes
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (file && file.type === 'application/pdf') {
+    if (file && file.type === 'application/epub+zip') {
       setFile(file);
-      setFilePreview(URL.createObjectURL(file));
+      setFileName(file.name);
     } else {
-      toast.error('Please upload a valid PDF file');
+      toast.error('Please upload a valid EPUB file');
       setFile(null);
-      setFilePreview(null);
+      setFileName(null);
     }
   };
 
@@ -56,38 +58,41 @@ function AddBook() {
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+    setIsSubmitting(true);
+
     // Function to check if file size is within limit (e.g., 1GB)
     const isFileSizeValid = (file) => file.size <= 1 * 1024 * 1024 * 1024; // 1GB in bytes
-  
+
     // Check if all files are valid
     if (coverImages.some(image => !isFileSizeValid(image)) || (file && !isFileSizeValid(file))) {
       toast.error('One or more files exceed the 1GB size limit.');
+      setIsSubmitting(false);
       return;
     }
-  
+
     try {
       // Convert cover images to Base64
       const imagePromises = coverImages.map((image) => convertFileToBase64(image));
       const base64Images = await Promise.all(imagePromises);
-  
+
       // Prepare form data
       const formData = new FormData();
       formData.append('bookName', bookData.bookName);
       formData.append('author', bookData.author);
       formData.append('description', bookData.description);
+      formData.append('category', bookData.category); // Add category
       formData.append('dateAdded', convertToIST(bookData.dateAdded)); // Convert date to IST
-  
+
       // Append Base64 cover images
       base64Images.forEach((base64Image) => {
         formData.append('coverImages', base64Image);
       });
-  
-      // Append PDF file directly
+
+      // Append EPUB file directly
       if (file) {
-        formData.append('pdfFile', file);
+        formData.append('bookFile', file);
       }
-  
+
       // Send the form data to the server
       await axios.post('http://localhost:5454/api/books/add', formData, {
         headers: {
@@ -95,48 +100,43 @@ function AddBook() {
         },
         timeout: 60000 * 2, // 2 minutes timeout
       });
-  
+
       toast.success('Book added successfully!');
-  
+    } catch (error) {
+      toast.error(`Error adding the book: ${error.response?.data?.error || 'Unknown error'}`);
+      console.error('Error:', error);
+    } finally {
+      setIsSubmitting(false);
       // Reset form fields
       setBookData({
         bookName: '',
         author: '',
         description: '',
         dateAdded: '',
+        category: '',
       });
       setCoverImages([]);
       setCoverImagePreviews([]);
       setFile(null);
-      setFilePreview(null);
-  
-    } catch (error) {
-      toast.error(`Error adding the book: ${error.response?.data?.error || 'Unknown error'}`);
-      console.error('Error:', error);
+      setFileName(null);
     }
   };
+    // Handle removing an image
+    const handleRemoveImage = (index) => {
+      setCoverImages((prevImages) => prevImages.filter((_, i) => i !== index));
+      setCoverImagePreviews((prevPreviews) => prevPreviews.filter((_, i) => i !== index));
+    };
   
+    // Handle replacing an image
+    const handleReplaceImage = (e, index) => {
+      const file = e.target.files[0];
+      if (file) {
+        const newImagePreview = URL.createObjectURL(file);
+        setCoverImages((prevImages) => prevImages.map((img, i) => (i === index ? file : img)));
+        setCoverImagePreviews((prevPreviews) => prevPreviews.map((preview, i) => (i === index ? newImagePreview : preview)));
+      }
+    };
   
-  
-  
-  
-
-
-  // Handle removing an image
-  const handleRemoveImage = (index) => {
-    setCoverImages((prevImages) => prevImages.filter((_, i) => i !== index));
-    setCoverImagePreviews((prevPreviews) => prevPreviews.filter((_, i) => i !== index));
-  };
-
-  // Handle replacing an image
-  const handleReplaceImage = (e, index) => {
-    const file = e.target.files[0];
-    if (file) {
-      const newImagePreview = URL.createObjectURL(file);
-      setCoverImages((prevImages) => prevImages.map((img, i) => (i === index ? file : img)));
-      setCoverImagePreviews((prevPreviews) => prevPreviews.map((preview, i) => (i === index ? newImagePreview : preview)));
-    }
-  };
 
   // Convert local time to IST
   const convertToIST = (localDate) => {
@@ -190,6 +190,31 @@ function AddBook() {
           required
         />
       </div>
+
+      
+      <div className="mb-4">
+        <label className="block text-black text-xl font-bold mb-2">Category</label>
+        <select
+          name="category"
+          value={bookData.category}
+          onChange={handleChange}
+          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+          required
+        >
+          <option value="">Select a category</option>
+          <option value="Fiction">Fiction</option>
+          <option value="Non-Fiction">Non-Fiction</option>
+          <option value="Science">Science</option>
+          <option value="History">History</option>
+          <option value="Biography">Biography</option>
+          <option value="Fantasy">Fantasy</option>
+          <option value="Mystery">Mystery</option>
+          <option value="Romance">Romance</option>
+          <option value="Horror">Horror</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
 
       <div className="mb-4">
         <label className="block text-black text-xl font-bold mb-2">Add Date</label>
@@ -259,29 +284,30 @@ function AddBook() {
       </div>
 
       <div className="mb-4">
-        <label className="block text-black text-xl font-bold mb-2">PDF File</label>
+        <label className="block text-black text-xl font-bold mb-2">EPUB File</label>
         <input
           type="file"
-          accept=".pdf"
+          accept=".epub"
           onChange={handleFileChange}
           className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
           required
         />
-        {filePreview && (
-          <iframe
-            src={filePreview}
-            title="File Preview"
-            className="w-full h-64 mt-2 border-2 border-gray-300 rounded"
-          />
+        {fileName && (
+          <div className="mt-2">
+            <p className="text-black text-lg">Selected EPUB: {fileName}</p>
+          </div>
         )}
       </div>
 
-      <button
-        type="submit"
-        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-      >
-        Add Book
-      </button>
+      <div className="flex justify-center mt-6">
+        <button
+          type="submit"
+          className={`bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? 'Adding...' : 'Add Book'}
+        </button>
+      </div>
     </form>
   );
 }
