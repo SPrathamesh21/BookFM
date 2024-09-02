@@ -16,11 +16,19 @@ const initialMessages = {
 };
 
 function NotificationModal({ isOpen, onClose }) {
+  const [messages, setMessages] = useState(initialMessages);
   const [showRead, setShowRead] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState(null);
 
   const handleCardClick = (message) => {
     setSelectedMessage(message);
+
+    // Move message from unread to read if it's in unread section
+    if (!showRead && messages.unread.find(msg => msg.id === message.id)) {
+      const newUnread = messages.unread.filter(msg => msg.id !== message.id);
+      const newRead = [...messages.read, message];
+      setMessages({ unread: newUnread, read: newRead });
+    }
   };
 
   if (!isOpen) return null;
@@ -40,17 +48,17 @@ function NotificationModal({ isOpen, onClose }) {
             className={`py-2 px-4 rounded-md mr-2 ${!showRead ? 'bg-teal-500 text-white' : 'bg-gray-300 text-gray-700'}`}
             onClick={() => setShowRead(false)}
           >
-            Unread ({initialMessages.unread.length})
+            Unread ({messages.unread.length})
           </button>
           <button
             className={`py-2 px-4 rounded-md ${showRead ? 'bg-teal-500 text-white' : 'bg-gray-300 text-gray-700'}`}
             onClick={() => setShowRead(true)}
           >
-            Read ({initialMessages.read.length})
+            Read ({messages.read.length})
           </button>
         </div>
-        <div className="space-y-2 max-h-60 overflow-y-auto">
-          {(showRead ? initialMessages.read : initialMessages.unread).map((msg) => (
+        <div className="space-y-2">
+          {(showRead ? messages.read : messages.unread).map((msg) => (
             <div
               key={msg.id}
               className={`p-3 rounded-md ${showRead ? 'bg-gray-700' : 'bg-red-500'} text-white cursor-pointer`}
