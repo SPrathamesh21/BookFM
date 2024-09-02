@@ -27,7 +27,7 @@ function NotificationModal({ isOpen, onClose }) {
 
   return (
     <div className="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50">
-      <div className="bg-white w-11/12 max-w-md p-6 rounded-lg relative max-h-screen md:max-h-80 overflow-hidden">
+      <div className="bg-white w-11/12 max-w-md p-6 rounded-lg relative max-h-80 overflow-y-auto">
         <button
           className="absolute top-2 right-2 text-gray-600 hover:text-gray-900"
           onClick={onClose}
@@ -64,7 +64,7 @@ function NotificationModal({ isOpen, onClose }) {
         {/* Detailed Message Modal */}
         {selectedMessage && (
           <div className="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center z-50">
-            <div className="bg-white w-11/12 max-w-lg p-8 rounded-lg relative max-h-screen md:max-h-80 overflow-auto">
+            <div className="bg-white w-11/12 max-w-lg p-8 rounded-lg relative max-h-80 overflow-y-auto">
               <button
                 className="absolute top-2 right-2 text-gray-600 hover:text-gray-900"
                 onClick={() => setSelectedMessage(null)}
