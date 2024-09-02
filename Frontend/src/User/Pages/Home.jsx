@@ -1,21 +1,28 @@
 import React from 'react';
-import Header from '../Components/Header';
-import Footer from '../Components/Footer';
-import MobileHeader from '../Components/MobileHeader';
+import BookCarousel from '../Components/BookCarousel';
+
 function Home() {
   const handleCategoryClick = (category) => {
-    // Logic to filter and render books by category
     alert(`Selected category: ${category}`);
   };
+
+  const books = [
+    { id: 1, title: 'Book Title 1', author: 'Author Name', cover: 'https://via.placeholder.com/150' },
+    { id: 2, title: 'Book Title 2', author: 'Author Name', cover: 'https://via.placeholder.com/150' },
+    { id: 3, title: 'Book Title 3', author: 'Author Name', cover: 'https://via.placeholder.com/150' },
+    { id: 4, title: 'Book Title 4', author: 'Author Name', cover: 'https://via.placeholder.com/150' },
+    { id: 5, title: 'Book Title 5', author: 'Author Name', cover: 'https://via.placeholder.com/150' },
+    { id: 6, title: 'Book Title 6', author: 'Author Name', cover: 'https://via.placeholder.com/150' },
+  ];
+
   return (
     <div className="min-h-screen bg-gray-800 text-gray-100 flex flex-col">
 
-
-        {/* Categories Bar */}
-        <section className="bg-gray-800 text-gray-100 p-4 overflow-x-auto whitespace-nowrap">
-        {["Fiction", "Non-Fiction", "Mystery", "Romance", "Sci-Fi", "Fantasy"].map((category) => (
-          <button 
-            key={category} 
+      {/* Categories Bar */}
+      <section className="bg-gray-800 text-gray-100 p-4 overflow-x-auto whitespace-nowrap">
+        {['Fiction', 'Non-Fiction', 'Mystery', 'Romance', 'Sci-Fi', 'Fantasy'].map((category) => (
+          <button
+            key={category}
             className="inline-block px-4 py-2 mx-2 bg-gray-700 text-teal-400 rounded-full hover:bg-teal-400 hover:text-gray-900"
             onClick={() => handleCategoryClick(category)}
           >
@@ -23,6 +30,7 @@ function Home() {
           </button>
         ))}
       </section>
+
       {/* Hero Section */}
       <main className="flex-grow">
         <section className="bg-gray-900 py-16 text-center">
@@ -33,23 +41,9 @@ function Home() {
           </button>
         </section>
 
-        {/* Featured Books Section */}
-        <section className="w-full max-w-6xl mx-auto px-4 py-12">
-          <h2 className="text-3xl font-semibold mb-8 text-teal-400">Featured Books</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-            {[1, 2, 3, 4].map((book) => (
-              <div key={book} className="bg-gray-700 shadow-lg rounded-lg overflow-hidden">
-                <img src={`https://via.placeholder.com/150`} alt={`Book ${book}`} className="w-full h-40 object-cover" />
-                <div className="p-4">
-                  <h3 className="text-xl font-semibold text-teal-400">Book Title {book}</h3>
-                  <p className="text-gray-400 mt-2">Author Name</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+        {/* Book Carousel Section */}
+        <BookCarousel books={books} />
       </main>
-
 
     </div>
   );
