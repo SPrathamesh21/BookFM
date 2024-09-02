@@ -2,18 +2,18 @@ import React from 'react';
 import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
-import { FaArrowLeft, FaArrowRight } from 'react-icons/fa';
+import '../../Style/BookCarousel.css'
 
 const BookCarousel = ({ books }) => {
   const CustomPrevArrow = (props) => {
     const { className, onClick } = props;
     return (
       <button
-        className={`${className} slick-prev bg-teal-500 bg-opacity-80 hover:bg-opacity-100 text-white rounded-full w-12 h-12 flex justify-center items-center shadow-lg transform hover:scale-110 transition-transform`}
-        style={{ left: '-25px', zIndex: 10 }}
+        className={`${className} slick-prev p-0 bg-teal-500 hover:bg-teal-600 text-white rounded-full w-12 h-12 flex justify-center items-center shadow-lg transform hover:scale-110 transition-transform`}
+        style={{ left: '-20px', zIndex: 10}}
         onClick={onClick}
       >
-        <FaArrowLeft />
+       
       </button>
     );
   };
@@ -22,24 +22,22 @@ const BookCarousel = ({ books }) => {
     const { className, onClick } = props;
     return (
       <button
-        className={`${className} slick-next bg-teal-500 bg-opacity-80 hover:bg-opacity-100 text-white rounded-full w-12 h-12 flex justify-center items-center shadow-lg transform hover:scale-110 transition-transform`}
-        style={{ right: '-25px', zIndex: 10 }}
+        className={`${className} slick-next bg-teal-500 hover:bg-teal-600 text-white rounded-full w-12 h-12 flex justify-center items-center shadow-lg transform hover:scale-110 transition-transform`}
+        style={{ right: '-20px', zIndex: 10}}
         onClick={onClick}
       >
-        <FaArrowRight />
       </button>
     );
   };
 
   const settings = {
-    dots: true,
+    dots: false,
     infinite: true,
     speed: 500,
     slidesToShow: 6,
     slidesToScroll: 1,
     nextArrow: <CustomNextArrow />,
     prevArrow: <CustomPrevArrow />,
-    dotsClass: 'slick-dots custom-dots',
     responsive: [
       {
         breakpoint: 1024,

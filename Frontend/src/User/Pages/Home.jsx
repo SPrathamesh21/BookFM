@@ -43,6 +43,11 @@ function Home() {
 
         {/* Book Carousel Section */}
         <BookCarousel books={books} />
+        <BookCarousel books={books} />
+        <BookCarousel books={books} />
+        <BookCarousel books={books} />
+        <BookCarousel books={books} />
+        <BookCarousel books={books} />
       </main>
 
     </div>
