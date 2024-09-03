@@ -24,3 +24,25 @@ exports.getBookById = async (req, res) => {
       res.status(500).json({ message: 'Server error' });
     }
   };
+
+  exports.getSearchedEbooks = async (req, res) => {
+    try {
+        const { query } = req.query;
+
+        if (!query) {
+            return res.status(400).json({ error: 'Query parameter is required' });
+        }
+
+        // Find books where the bookName or author contains the query string
+        const suggestions = await Book.find({
+            $or: [
+                { bookName: { $regex: query, $options: 'i' } },
+                { author: { $regex: query, $options: 'i' } }
+            ]
+        }).select('bookName author _id');
+
+        res.json(suggestions);
+    } catch (error) {
+        res.status(500).json({ error: 'Server Error' });
+    }
+};

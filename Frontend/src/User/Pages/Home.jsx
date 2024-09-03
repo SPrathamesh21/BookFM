@@ -1,17 +1,25 @@
 import React, { useEffect, useState } from 'react';
-import axios from '../../../axiosConfig';
+import { useNavigate } from 'react-router-dom';
+import axios from '../../../axiosConfig'; // Adjust the path if necessary
 import BookCarousel from '../Components/BookCarousel';
 import '../../Style/BookCarousel.css';
 
 function Home() {
   const [books, setBooks] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const navigate = useNavigate(); // Initialize useNavigate
 
   useEffect(() => {
-    // Fetch books data from the backend
     const fetchBooks = async () => {
       try {
         const response = await axios.get('/get-books'); 
-        setBooks(response.data);
+        const booksData = response.data;
+        // console.log('book data', booksData)
+        setBooks(booksData);
+        const allCategories = booksData.flatMap(book => book.category);
+        const uniqueCategories = [...new Set(allCategories)]; 
+
+        setCategories(uniqueCategories);
       } catch (error) {
         console.error('Error fetching books:', error);
       }
@@ -21,15 +29,14 @@ function Home() {
   }, []);
 
   const handleCategoryClick = (category) => {
-    alert(`Selected category: ${category}`);
+    navigate(`/category/${category.toLowerCase()}`); // Navigate to the category page
   };
 
   return (
     <div className="min-h-screen bg-gray-800 text-gray-100 flex flex-col">
-
       {/* Categories Bar */}
       <section className="bg-gray-800 text-gray-100 p-4 overflow-x-auto whitespace-nowrap">
-        {['Fiction', 'Non-Fiction', 'Mystery', 'Romance', 'Sci-Fi', 'Fantasy'].map((category) => (
+        {categories.map((category) => (
           <button
             key={category}
             className="inline-block px-4 py-2 mx-2 bg-gray-700 text-teal-400 rounded-full hover:bg-teal-400 hover:text-gray-900"
@@ -57,7 +64,6 @@ function Home() {
         {/* Book Carousel Section */}
         <BookCarousel books={books} />
       </main>
-      
     </div>
   );
 }

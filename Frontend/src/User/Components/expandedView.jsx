@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import axios from '../../../axiosConfig';
 import { FaShareAlt, FaBookOpen } from 'react-icons/fa';
 
 const ExpandedView = () => {
   const { bookId } = useParams();
-  const navigate = useNavigate(); 
   const [book, setBook] = useState(null);
   const [isHover, setIsHover] = useState(false);
   const [isReadHover, setIsReadHover] = useState(false);

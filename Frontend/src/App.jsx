@@ -10,7 +10,7 @@ import ExpandedView from './User/Components/expandedView';
 import Discover from './User/Pages/Discover';
 import Signup from './User/Pages/Signup';
 import Login from './User/Pages/Login';
-
+import CategoryPage from './User/Pages/CategoryPage';
 
 function App() { 
   const [isMobile, setIsMobile] = useState(false); 
@@ -41,6 +41,7 @@ function App() {
       <Routes>
         <Route path='/' element={<Home />} />
         <Route path='/discover' element={<Discover />} />
+        <Route path="/category/:categoryName" element={<CategoryPage />} />
         <Route path='/signup' element={<Signup />} />
         <Route path='/login' element={<Login />} />
         <Route path='/header' element={<Header />} />
