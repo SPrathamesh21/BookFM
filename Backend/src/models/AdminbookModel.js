@@ -6,10 +6,13 @@ const bookSchema = new mongoose.Schema({
   description: { type: String, required: true },
   category: { type: String, required: true },
   dateAdded: { type: Date, required: true },
-  coverImages: [String],
-  EPUBbase64: { type: mongoose.Schema.Types.ObjectId, ref: 'epubs' }
+  coverImages: [String], // Array of Base64-encoded image strings
+  EPUBbase64: {
+    id: { type: mongoose.Schema.Types.ObjectId, ref: 'epubs', required: true }, // GridFS ID
+    filename: { type: String, required: true } // Filename of the EPUB file
+  }
 });
 
-const Book = mongoose.models.Book || mongoose.model('Book', bookSchema);
+const Book = mongoose.model('Book', bookSchema);
 
 module.exports = Book;

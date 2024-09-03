@@ -2,7 +2,7 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const bookRoutes = require('./routes/bookRoutes');
+const bookRoutes = require('./routes/AdminbookRoutes');
 const { connectDB } = require('./config/db');
 const bodyParser = require('body-parser'); // Import body-parser
 const userBookRoutes = require('./routes/userBookRoutes')

@@ -1,4 +1,4 @@
-const Book = require('../models/bookModel')
+const Book = require('../models/AdminbookModel')
 
 // Get all books
 exports.getBooks = async (req, res) => {

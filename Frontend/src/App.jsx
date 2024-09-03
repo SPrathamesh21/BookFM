@@ -11,6 +11,7 @@ import Discover from './User/Pages/Discover';
 import Signup from './User/Pages/Signup';
 import Login from './User/Pages/Login';
 import CategoryPage from './User/Pages/CategoryPage';
+import { ToastContainer } from 'react-toastify';
 
 function App() { 
   const [isMobile, setIsMobile] = useState(false); 
@@ -48,7 +49,9 @@ function App() {
         <Route path="/book/:bookId" element={<ExpandedView />} /> {/* New route */}
         <Route path="/admin_panel/*" element={<DefaultAdminPage />} />
       </Routes>
-    {shouldShowFooter && <Footer />}
+        <ToastContainer />
+        {shouldShowFooter && <Footer />}
+        
     </>
   );
 }

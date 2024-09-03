@@ -39,6 +39,9 @@ const SideNav = () => {
         <AnimatedIcon icon={faPlus} label="Add E-Book" to="/admin_panel/AddEBook" />
         <hr />
 
+        <AnimatedIcon icon={faEdit} label="Edit E-Book" to="/admin_panel/EditEBookPage" />
+        <hr />
+
       </ul>
     </div>
   </nav>
