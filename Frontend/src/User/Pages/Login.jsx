@@ -33,6 +33,7 @@ function Login({ userData }) {
     try {
       const response = await axios.post('/login', form, { withCredentials: true });
       const { user } = response.data;
+      console.log('usersss', user)
       login(user); 
       toast.success("Login successful!");
       setTimeout(() => {

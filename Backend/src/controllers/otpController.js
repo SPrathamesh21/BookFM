@@ -4,6 +4,8 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
+const moment = require('moment-timezone');
+
 
 const generateOtp = () => {
   return crypto.randomInt(100000, 999999).toString();
@@ -13,14 +15,18 @@ exports.sendOtp = async (req, res) => {
   const { email } = req.body;
 
   try {
-    const user = User.findOne({email})
-    if (user){
-      return res.status(400).json({ message: "You already have an account. You can log in now." })
+    const user = await User.findOne({ email });
+    if (user) {
+      return res.status(400).json({ message: "You already have an account. You can log in now." });
     }
+
     const otp = generateOtp();
-    const expiresAt = Date.now() + 2 * 60 * 1000;
+    const currentISTTime = moment.tz('Asia/Kolkata');
+    const expiresAt = currentISTTime.add(2, 'minutes').toDate();
+
     const otpDoc = new Otp({ email, otp, expiresAt });
     await otpDoc.save();
+
     const transporter = nodemailer.createTransport({
       service: 'Gmail',
       auth: {
@@ -51,8 +57,9 @@ exports.resendOtp = async (req, res) => {
   try {
     await Otp.deleteMany({ email });
 
+    const currentISTTime = moment.tz('Asia/Kolkata');
     const otp = generateOtp();
-    const expiresAt = Date.now() + 2 * 60 * 1000;
+    const expiresAt = currentISTTime.add(2, 'minutes').toDate();
 
     const otpDoc = new Otp({ email, otp, expiresAt });
     await otpDoc.save();
@@ -81,13 +88,21 @@ exports.resendOtp = async (req, res) => {
   }
 };
 
+
 exports.verifyOtpAndSignup = async (req, res) => {
   const { fullName, email, phone, password, otp } = req.body;
 
   try {
     const otpDoc = await Otp.findOne({ email });
-    console.log('user', otpDoc)
-    if (!otpDoc || otpDoc.otp !== otp || otpDoc.expiresAt < Date.now()) {
+
+    if (!otpDoc) {
+      return res.status(400).json({ message: 'Invalid or expired OTP.' });
+    }
+
+    const currentISTTime = moment.tz('Asia/Kolkata');
+
+    // Compare the actual moment objects instead of formatted strings
+    if (otpDoc.otp !== otp || currentISTTime.isAfter(moment(otpDoc.expiresAt, 'Do MMM YYYY hh:mm A'))) {
       return res.status(400).json({ message: 'Invalid or expired OTP.' });
     }
 
@@ -109,6 +124,7 @@ exports.verifyOtpAndSignup = async (req, res) => {
 
     const token = jwt.sign(
       {
+        fullName: newUser.fullName,
         userId: newUser._id,
         email: newUser.email,
         phone: newUser.phone,
@@ -123,21 +139,23 @@ exports.verifyOtpAndSignup = async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 6 * 30 * 24 * 60 * 60 * 1000
+      maxAge: 6 * 30 * 24 * 60 * 60 * 1000, // 6 months
     });
 
     res.status(201).json({
       message: "You've successfully registered!",
       user: {
         email: newUser.email,
-        name: newUser.fullName,
+        fullName: newUser.fullName,
         phoneNumber: newUser.phone,
         isPremium: newUser.isPremium,
         premiumPlan: newUser.premiumPlan,
         userId: newUser._id,
+
       },
     });
   } catch (error) {
+    console.error('Signup error:', error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -159,7 +177,7 @@ exports.login = async (req, res) => {
 
     // Create a JWT token
     const token = jwt.sign(
-      { userId: user._id, email: user.email, name:user.name, phone:user.phone, isPremium:user.isPremium, premiumPlan:user.premiumPlan, premiumExpiresAt:user.premiumExpiresAt },
+      { userId: user._id, email: user.email, fullName:user.fullName, phone:user.phone, isPremium:user.isPremium, premiumPlan:user.premiumPlan, premiumExpiresAt:user.premiumExpiresAt },
       process.env.JWT_SECRET,
       { expiresIn: '180d' } 
     );
@@ -180,7 +198,7 @@ exports.login = async (req, res) => {
       user: {
         userId: user._id,
         email: user.email,
-        name: user.name,
+        fullName: user.fullName,
         phoneNumber: user.phoneNumber,
         isPremium: user.isPremium,
         premiumPlan: user.premiumPlan,

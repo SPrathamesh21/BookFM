@@ -93,8 +93,8 @@ function Signup() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.email) {
-      toast.error('Please enter an email address to register.');
+    if (form.password !== form.confirmpassword) {
+      toast.error("Passwords do not match.");
       return;
     }
     if (showOtpInput) {
@@ -108,12 +108,16 @@ function Signup() {
         //   localStorage.removeItem("signupFormData");
         //   navigate('/');
         // }, 1000);
+        setTimeout(() => {
+          navigate('/');
+        }, 1000);
       } catch (error) {
         const errorMessage = error.response?.data?.message;
         toast.error(errorMessage);
       }
     } else {
       try {
+
         setIsSendingOtp(true);
         // localStorage.setItem("signupFormData", encryptData(form));
         await axios.post('/send-otp', { email: form.email });

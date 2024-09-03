@@ -5,6 +5,7 @@ const bookRoutes = require('./routes/AdminbookRoutes');
 const { connectDB } = require('./config/db');
 const bodyParser = require('body-parser'); 
 const userBookRoutes = require('./routes/userBookRoutes')
+const cookieParser = require('cookie-parser');
 
 dotenv.config();
 const app = express();
@@ -18,6 +19,7 @@ app.use(cors({
   credentials: true 
 }));
 
+app.use(cookieParser());
 
 
 // Middleware
