@@ -145,12 +145,12 @@ function EditEbook() {
     event.preventDefault();
 
     const formData = new FormData();
-    formData.append("bookName", ebookData.title);
+    formData.append("title", ebookData.title);
     formData.append("author", ebookData.author);
     formData.append("description", ebookData.description);
     formData.append("category", ebookData.category);
 
-    coverImages.forEach((image) => {
+    coverImages.forEach((image, index) => {
       // Ensure the Base64 images are added correctly
       formData.append("coverImages", image);
     });
@@ -251,85 +251,83 @@ function EditEbook() {
                   alt={`Cover ${index}`}
                   className="w-32 h-32 object-cover"
                 />
-                <button
-                  type="button"
-                  className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full"
-                  onClick={() => handleDeleteImage(image.id)}
-                >
-                  <FaTrashAlt />
-                </button>
-                <button
-                  type="button"
-                  className="absolute bottom-0 right-0 bg-blue-500 text-white p-1 rounded-full"
-                  onClick={() => handleReplaceImage(index)}
-                >
-                  <FaEdit />
-                </button>
+                <div className="absolute top-0 right-0 flex space-x-2 p-1">
+                  <button
+                    type="button"
+                    onClick={() => handleReplaceImage(index)}
+                    className="bg-blue-500 text-white px-2 py-1 rounded"
+                  >
+                    <FaEdit />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteImage(image.id)}
+                    className="bg-red-500 text-white px-2 py-1 rounded"
+                  >
+                    <FaTrashAlt />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
         )}
         <button
           type="button"
-          className="bg-blue-500 text-white px-4 py-2 rounded mt-2"
           onClick={() => document.querySelector('input[name="coverImages"]').click()}
+          className="mt-2 bg-gray-500 text-white px-4 py-2 rounded"
         >
-          {imageToReplace !== null ? "Replace Image" : "Add Images"}
+          Add More Images
         </button>
       </div>
 
       <div className="mb-4">
         <label className="block text-black text-xl font-bold mb-2">EPUB File</label>
         <input
-          className="block w-full text-gray-700 mb-2"
           type="file"
           name="ebookFile"
-          accept=".epub"
+          accept="application/epub+zip"
           onChange={handleFileChange}
         />
-        {ebookFile && (
-          <p className="text-gray-600">Selected EPUB file: {ebookFile.name}</p>
-        )}
+        {ebookFile && <p>Selected EPUB: {ebookFile.name}</p>}
       </div>
 
       <div className="flex justify-between">
-        <button
-          type="button"
-          className="bg-gray-500 text-white px-4 py-2 rounded"
-          onClick={handleCancel}
-        >
-          Cancel
-        </button>
         <button
           type="submit"
           className="bg-blue-500 text-white px-4 py-2 rounded"
         >
           Update Ebook
         </button>
+        <button
+          type="button"
+          onClick={handleCancel}
+          className="bg-gray-500 text-white px-4 py-2 rounded"
+        >
+          Cancel
+        </button>
       </div>
     </form>
   );
 }
 
-const Dropdown = ({ label, name, options, value, onSelect, isOpen, toggleDropdown }) => (
-  <div className="mb-4">
-    <label className="block text-black text-xl font-bold mb-2">{label}</label>
-    <div className="relative">
+function Dropdown({ label, name, options, value, onSelect, isOpen, toggleDropdown }) {
+  return (
+    <div className="relative mb-4">
+      <label className="block text-black text-xl font-bold mb-2">{label}</label>
       <button
         type="button"
+        className="block w-full bg-gray-200 text-gray-700 py-2 px-3 rounded"
         onClick={toggleDropdown}
-        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline flex justify-between items-center"
       >
-        {value || `Select ${label}`}
-        <span className="ml-2">{isOpen ? '▲' : '▼'}</span>
+        {value || "Select a category"}
       </button>
       {isOpen && (
-        <ul className="absolute z-10 w-full bg-white border rounded shadow-lg mt-2">
+        <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded shadow-lg">
           {options.map((option) => (
             <li
               key={option}
-              className="cursor-pointer py-2 px-4 hover:bg-gray-200"
               onClick={() => onSelect(option)}
+              className="cursor-pointer hover:bg-gray-100 px-4 py-2"
             >
               {option}
             </li>
@@ -337,7 +335,7 @@ const Dropdown = ({ label, name, options, value, onSelect, isOpen, toggleDropdow
         </ul>
       )}
     </div>
-  </div>
-);
+  );
+}
 
 export default EditEbook;
