@@ -12,6 +12,7 @@ import Signup from './User/Pages/Signup';
 import Login from './User/Pages/Login';
 import CategoryPage from './User/Pages/CategoryPage';
 import { ToastContainer } from 'react-toastify';
+import { AuthProvider } from './Context/authContext'
 
 function App() { 
   const [isMobile, setIsMobile] = useState(false); 
@@ -58,9 +59,12 @@ function App() {
 
 function AppWrapper(){
   return (
-    <Router>
-      <App />
-    </Router>
+    <AuthProvider>
+      <Router>
+        <App />
+      </Router>
+    </AuthProvider>
+    
   )
 }
 export default AppWrapper

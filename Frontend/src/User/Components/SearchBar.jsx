@@ -39,7 +39,7 @@ function SearchBar() {
   };
 
   return (
-    <div className="relative flex-grow max-w-md mx-4">
+    <div className="relative flex-grow max-w-md">
       <input
         type="text"
         value={query}

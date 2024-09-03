@@ -19,7 +19,6 @@ function Header() {
         BookFM
       </Link>
 
-      {/* Replace with SearchBar */}
       <SearchBar />
 
       {/* Navigation and Notifications */}

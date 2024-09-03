@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FaSearch, FaBell } from 'react-icons/fa';
+import { FaBell } from 'react-icons/fa';
 import NotificationModal from './NotificationModal';
+import SearchBar from './SearchBar';
 
 
 function MobileHeader() {
@@ -33,14 +34,7 @@ function MobileHeader() {
         </div>
       </div>
 
-      <div className="relative">
-        <input
-          type="text"
-          placeholder="Search ebooks..."
-          className="py-2 px-4 pl-10 rounded-md w-full bg-gray-700 text-gray-100 placeholder-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-400"
-        />
-        <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-teal-400" />
-      </div>
+      <SearchBar />
 
       <NotificationModal isOpen={isModalOpen} onClose={handleCloseModal} />
     </header>
