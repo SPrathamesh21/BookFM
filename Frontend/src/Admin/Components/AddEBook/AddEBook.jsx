@@ -1,13 +1,19 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { FaEdit, FaTrashAlt, FaChevronDown } from "react-icons/fa";
+
+const Loader = () => (
+  <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-50 z-50">
+    <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent border-solid rounded-full animate-spin"></div>
+  </div>
+);
 
 function AddBook() {
   const [bookData, setBookData] = useState({
     bookName: '',
     author: '',
     description: '',
-    dateAdded: '',
     category: '', // Added category field
   });
   const [coverImages, setCoverImages] = useState([]);
@@ -16,12 +22,20 @@ function AddBook() {
   const [fileName, setFileName] = useState(null); // For EPUB file name
   const [showImageInput, setShowImageInput] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false); // Track dropdown state
+
 
   // Handle change in input fields
   const handleChange = (e) => {
     const { name, value } = e.target;
     setBookData((prevData) => ({ ...prevData, [name]: value }));
   };
+
+  // Handle category dropdown toggle
+  const toggleDropdown = () => {
+    setIsDropdownOpen(!isDropdownOpen);
+  };
+
 
   // Handle image input changes
   const handleImageChange = (e) => {
@@ -81,7 +95,6 @@ function AddBook() {
       formData.append('author', bookData.author);
       formData.append('description', bookData.description);
       formData.append('category', bookData.category); // Add category
-      formData.append('dateAdded', convertToIST(bookData.dateAdded)); // Convert date to IST
 
       // Append Base64 cover images
       base64Images.forEach((base64Image) => {
@@ -100,7 +113,7 @@ function AddBook() {
         },
         timeout: 60000 * 2, // 2 minutes timeout
       });
-      alert('book added successfully!')
+
       toast.success('Book added successfully!');
     } catch (error) {
       toast.error(`Error adding the book: ${error.response?.data?.error || 'Unknown error'}`);
@@ -121,29 +134,23 @@ function AddBook() {
       setFileName(null);
     }
   };
-    // Handle removing an image
-    const handleRemoveImage = (index) => {
-      setCoverImages((prevImages) => prevImages.filter((_, i) => i !== index));
-      setCoverImagePreviews((prevPreviews) => prevPreviews.filter((_, i) => i !== index));
-    };
-  
-    // Handle replacing an image
-    const handleReplaceImage = (e, index) => {
-      const file = e.target.files[0];
-      if (file) {
-        const newImagePreview = URL.createObjectURL(file);
-        setCoverImages((prevImages) => prevImages.map((img, i) => (i === index ? file : img)));
-        setCoverImagePreviews((prevPreviews) => prevPreviews.map((preview, i) => (i === index ? newImagePreview : preview)));
-      }
-    };
-  
-
-  // Convert local time to IST
-  const convertToIST = (localDate) => {
-    const date = new Date(localDate);
-    const offset = 5.5 * 60 * 60 * 1000; // 5 hours 30 minutes in milliseconds
-    return new Date(date.getTime() + offset).toISOString();
+  // Handle removing an image
+  const handleRemoveImage = (index) => {
+    setCoverImages((prevImages) => prevImages.filter((_, i) => i !== index));
+    setCoverImagePreviews((prevPreviews) => prevPreviews.filter((_, i) => i !== index));
   };
+
+  // Handle replacing an image
+  const handleReplaceImage = (e, index) => {
+    const file = e.target.files[0];
+    if (file) {
+      const newImagePreview = URL.createObjectURL(file);
+      setCoverImages((prevImages) => prevImages.map((img, i) => (i === index ? file : img)));
+      setCoverImagePreviews((prevPreviews) => prevPreviews.map((preview, i) => (i === index ? newImagePreview : preview)));
+    }
+  };
+
+
 
   return (
     <form
@@ -191,42 +198,39 @@ function AddBook() {
         />
       </div>
 
-      
-      <div className="mb-4">
+
+      {/* Category dropdown */}
+      <div className="mb-4 relative">
         <label className="block text-black text-xl font-bold mb-2">Category</label>
-        <select
-          name="category"
-          value={bookData.category}
-          onChange={handleChange}
-          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-          required
-        >
-          <option value="">Select a category</option>
-          <option value="Fiction">Fiction</option>
-          <option value="Non-Fiction">Non-Fiction</option>
-          <option value="Science">Science</option>
-          <option value="History">History</option>
-          <option value="Biography">Biography</option>
-          <option value="Fantasy">Fantasy</option>
-          <option value="Mystery">Mystery</option>
-          <option value="Romance">Romance</option>
-          <option value="Horror">Horror</option>
-          <option value="Other">Other</option>
-        </select>
+        <div className="relative">
+          <select
+            name="category"
+            value={bookData.category}
+            onChange={handleChange}
+            onClick={toggleDropdown} // Toggle dropdown on click
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline pr-8"
+            required
+          >
+            <option value="">Select a category</option>
+            <option value="Fiction">Fiction</option>
+            <option value="Non-Fiction">Non-Fiction</option>
+            <option value="Science">Science</option>
+            <option value="History">History</option>
+            <option value="Biography">Biography</option>
+            <option value="Fantasy">Fantasy</option>
+            <option value="Mystery">Mystery</option>
+            <option value="Romance">Romance</option>
+            <option value="Horror">Horror</option>
+            <option value="Other">Other</option>
+          </select>
+          <FaChevronDown
+            className={`absolute right-3 top-1/2 transform -translate-y-1/2 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''
+              }`}
+          />
+        </div>
       </div>
 
 
-      <div className="mb-4">
-        <label className="block text-black text-xl font-bold mb-2">Add Date</label>
-        <input
-          type="datetime-local"
-          name="dateAdded"
-          value={bookData.dateAdded}
-          onChange={handleChange}
-          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-          required
-        />
-      </div>
 
       <div className="mb-4">
         <label className="block text-black text-xl font-bold mb-2">Cover Images</label>
@@ -258,30 +262,45 @@ function AddBook() {
 
         {/* Preview section */}
         <div className="flex flex-wrap mt-2">
-          {coverImagePreviews.map((preview, index) => (
-            <div key={index} className="relative">
-              <img
-                src={preview}
-                alt={`Preview ${index}`}
-                className="w-32 h-32 object-cover mr-2 mb-2 border border-gray-300 rounded-md"
-              />
-              <button
-                type="button"
-                onClick={() => handleRemoveImage(index)}
-                className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
-              >
-                X
-              </button>
-              <input
-                type="file"
-                accept="image/*"
-                className="mt-1"
-                onChange={(e) => handleReplaceImage(e, index)}
-              />
-            </div>
-          ))}
+          <div className="grid grid-cols-3 gap-2">
+            {coverImagePreviews.map((preview, index) => (
+              <div key={index} className="relative">
+                <img
+                  src={preview}
+                  alt={`Preview ${index}`}
+                  className="w-42 h-42 object-cover mr-2 mb-2 border border-gray-300 rounded-md"
+                />
+
+                {/* Remove image button */}
+                <button
+                  type="button"
+                  onClick={() => handleRemoveImage(index)}
+                  className="absolute top-0 right-0 bg-red-500 hover:bg-red-700 text-white rounded-full p-1"
+                >
+                  <FaTrashAlt />
+                </button>
+
+                {/* Replace image input with edit icon */}
+                <button
+                  type="button"
+                  className="absolute bottom-0 right-0 bg-blue-500 hover:bg-blue-700 text-white rounded-full p-1"
+                  onClick={() => document.getElementById(`replaceImageInput${index}`).click()}
+                >
+                  <FaEdit />
+                </button>
+                <input
+                  id={`replaceImageInput${index}`}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handleReplaceImage(e, index)}
+                />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
+
 
       <div className="mb-4">
         <label className="block text-black text-xl font-bold mb-2">EPUB File</label>
@@ -308,6 +327,8 @@ function AddBook() {
           {isSubmitting ? 'Adding...' : 'Add Book'}
         </button>
       </div>
+      {isSubmitting && <Loader />}
+
     </form>
   );
 }

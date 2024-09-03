@@ -3,15 +3,16 @@ const fs = require('fs')
 const mongoose = require('mongoose');
 const { GridFSBucket } = require('mongodb');
 const Book = require('../models/AdminbookModel');
+const moment = require('moment-timezone');
 
 const addBook = async (req, res) => {
   try {
-    const { bookName, author, description, dateAdded, category } = req.body;
+    const { bookName, author, description, category } = req.body;
     const coverImages = req.body.coverImages; // Already Base64-encoded images
     const bookFile = req.file; // Handle EPUB file
 
     // Check for required fields
-    if (!bookName || !author || !description || !dateAdded || !category || !coverImages || !bookFile) {
+    if (!bookName || !author || !description || !category || !coverImages || !bookFile) {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
@@ -29,16 +30,18 @@ const addBook = async (req, res) => {
     const uploadStream = bucket.openUploadStream(bookFile.originalname);
     uploadStream.end(bookFile.buffer);
 
-    // Create new book document
-    const newBook = new Book({
-      bookName,
-      author,
-      description,
-      category, // Added category
-      dateAdded: new Date(dateAdded),
-      coverImages,
-      EPUBbase64: { id: undefined, filename: undefined } // Ensure EPUBbase64 is updated later
-    });
+    const currentISTTime = moment.tz('Asia/Kolkata').format('Do MMM YYYY hh:mm A');
+
+// Create new book document
+const newBook = new Book({
+  bookName,
+  author,
+  description,
+  category, // Added category
+  dateAdded: currentISTTime, // Use formatted IST time
+  coverImages,
+  EPUBbase64: { id: undefined, filename: undefined } // Ensure EPUBbase64 is updated later
+});
 
     // Wait for file upload to complete
     uploadStream.on('finish', async () => {
@@ -192,4 +195,27 @@ const updateEbook = async (req, res) => {
 };
 
 
-module.exports = { addBook, getAllBooks, updateEbook, getEbookById};
+// Search books based on query
+const searchBooks = async (req, res) => {
+  const { query } = req.query;
+
+  if (!query) {
+    return res.status(400).json({ message: 'Search query is required' });
+  }
+
+  try {
+    // Perform a case-insensitive search on the title field
+    const books = await Book.find({
+      title: { $regex: query, $options: 'i' } // Case-insensitive search
+    }).limit(10); // Limit results to avoid overwhelming the client
+
+    res.json(books);
+  } catch (error) {
+    console.error('Error searching books:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+
+
+module.exports = { addBook, getAllBooks, updateEbook, getEbookById, searchBooks};

@@ -5,6 +5,13 @@ import 'react-toastify/dist/ReactToastify.css';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaEdit, FaTrashAlt } from "react-icons/fa";
 
+function Loader() {
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50">
+      <div className="w-16 h-16 border-t-4 border-blue-500 border-solid rounded-full animate-spin"></div>
+    </div>
+  );
+}
 function EditEbook() {
   const { id } = useParams();
   const [ebookData, setEbookData] = useState({
@@ -20,6 +27,8 @@ function EditEbook() {
   const [dropdown, setDropdown] = useState({
     category: false,
   });
+  const [isSubmitting, setIsSubmitting] = useState(false); // Loader state
+
   const navigate = useNavigate();
   const categories = ["Fiction", "Non-Fiction", "Science", "History", "Biography", "Fantasy"];
 
@@ -143,6 +152,7 @@ function EditEbook() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    setIsSubmitting(true); // Show loader
 
     const formData = new FormData();
     formData.append("title", ebookData.title);
@@ -150,7 +160,7 @@ function EditEbook() {
     formData.append("description", ebookData.description);
     formData.append("category", ebookData.category);
 
-    coverImages.forEach((image, index) => {
+    coverImages.forEach((image) => {
       // Ensure the Base64 images are added correctly
       formData.append("coverImages", image);
     });
@@ -169,6 +179,8 @@ function EditEbook() {
       navigate('/admin_panel/editEbookPage');
     } catch (error) {
       toast.error(`Error updating ebook. Please try again. ${error}`);
+    } finally {
+      setIsSubmitting(false); // Hide loader
     }
   };
 
@@ -255,14 +267,14 @@ function EditEbook() {
                   <button
                     type="button"
                     onClick={() => handleReplaceImage(index)}
-                    className="bg-blue-500 text-white px-2 py-1 rounded"
+                    className="bg-blue-500 hover:bg-blue-700 text-white px-1 py-1 rounded-full"
                   >
                     <FaEdit />
                   </button>
                   <button
                     type="button"
                     onClick={() => handleDeleteImage(image.id)}
-                    className="bg-red-500 text-white px-2 py-1 rounded"
+                    className="bg-red-500 hover:bg-red-700 text-white px-1 py-1 rounded-full"
                   >
                     <FaTrashAlt />
                   </button>
@@ -274,7 +286,7 @@ function EditEbook() {
         <button
           type="button"
           onClick={() => document.querySelector('input[name="coverImages"]').click()}
-          className="mt-2 bg-gray-500 text-white px-4 py-2 rounded"
+          className="mt-2 bg-blue-500 hover:bg-blue-700 mt-5 text-white px-4 py-2 rounded"
         >
           Add More Images
         </button>
@@ -306,6 +318,8 @@ function EditEbook() {
           Cancel
         </button>
       </div>
+      {isSubmitting && <Loader />}
+
     </form>
   );
 }

@@ -48,7 +48,7 @@ const EditBookList = () => {
   const fetchSuggestions = async (query) => {
     if (query.trim() !== '') {
       try {
-        const response = await axios.get(`/search_books`, {
+        const response = await axios.get('/api/books/search', { // Ensure this endpoint is correct
           params: { query }
         });
         setSearchSuggestions(response.data);
@@ -60,12 +60,20 @@ const EditBookList = () => {
     }
   };
 
+  // Debounce search suggestions fetch
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      fetchSuggestions(searchQuery);
+    }, 300); // Adjust debounce delay as needed
+
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
   // Handle search input change
   const handleSearchChange = (event) => {
     const query = event.target.value;
     setSearchQuery(query);
     setActiveSuggestionIndex(-1); // Reset active suggestion on input change
-    fetchSuggestions(query);
   };
 
   // Handle clear search input
