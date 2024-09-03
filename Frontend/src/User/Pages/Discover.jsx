@@ -36,8 +36,8 @@ function Discover() {
         {categories.map((category) => (
           <Link 
             key={category.name} 
-            to={`/category/${category.name.toLowerCase()}`} // Navigate to the CategoryPage
-            className="relative block bg-gray-800 rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300"
+            to={`/category/${category.name.toLowerCase()}`} 
+            className="relative block bg-gray-800 rounded-lg overflow-hidden shadow-lg hover:shadow-xl transform hover:scale-105 transition-transform duration-300"
           >
             <img src={category.image} alt={category.name} className="w-full h-40 object-cover" />
             <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
