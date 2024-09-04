@@ -1,24 +1,27 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from '../../../axiosConfig'; // Adjust the path if necessary
+import axios from '../../../axiosConfig'; 
 import BookCarousel from '../Components/BookCarousel';
 import '../../Style/BookCarousel.css';
+import { AuthContext } from '../../Context/authContext';
 
 function Home() {
   const [books, setBooks] = useState([]);
   const [categories, setCategories] = useState([]);
-  const navigate = useNavigate(); // Initialize useNavigate
+  const [userLibrary, setUserLibrary] = useState([]);
+  const [favoriteBooks, setFavoriteBooks] = useState([]);
+  const navigate = useNavigate(); 
+  const { currentUser } = useContext(AuthContext);
 
   useEffect(() => {
     const fetchBooks = async () => {
       try {
         const response = await axios.get('/get-books'); 
         const booksData = response.data;
-        // console.log('book data', booksData)
         setBooks(booksData);
+
         const allCategories = booksData.flatMap(book => book.category);
         const uniqueCategories = [...new Set(allCategories)]; 
-
         setCategories(uniqueCategories);
       } catch (error) {
         console.error('Error fetching books:', error);
@@ -28,8 +31,63 @@ function Home() {
     fetchBooks();
   }, []);
 
+  useEffect(() => {
+    const fetchUserLibrary = async () => {
+      if (currentUser && currentUser.userId) {
+        try {
+          const [libraryResponse, favoritesResponse] = await Promise.all([
+            axios.get(`/get-user-library/${currentUser.userId}`),
+            axios.get(`/get-favorites/${currentUser.userId}`)
+          ]);
+
+          const libraryBooks = libraryResponse.data;
+          setUserLibrary(libraryBooks);
+          console.log('libraybooks', libraryBooks)
+          const favoriteBooksData = favoritesResponse.data.favorites;
+          console.log('favoritesbooksData', favoriteBooksData)
+          // Filter the favorite books to match the criteria
+          const filteredFavoriteBooks = favoriteBooksData.filter(book => {
+            const isBookInLibrary = libraryBooks.some(libBook => {
+              // console.log('libbooks', libBook, libBook._id, book, book._id)
+              libBook._id === book._id});
+            return isBookInLibrary;
+          });
+          console.log('filterdataq', filteredFavoriteBooks)
+          // Group by category and count books in each category
+          const categoryCounts = {};
+          filteredFavoriteBooks.forEach(book => {
+            book.category.forEach(cat => {
+              categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+            });
+          });
+
+          // Only include books from categories with 5 or more books
+          const filteredBooksByCategory = filteredFavoriteBooks.filter(book => 
+            book.category.some(cat => categoryCounts[cat] >= 5)
+          );
+
+          // Check if there are at least 2 different categories
+          const categoriesInFavorites = new Set(
+            filteredBooksByCategory.flatMap(book => book.category)
+          );
+
+          if (categoriesInFavorites.size >= 2) {
+            setFavoriteBooks(filteredBooksByCategory);
+          } else {
+            setFavoriteBooks([]);
+          }
+
+        } catch (error) {
+          console.error('Error fetching user library or favorites:', error);
+        }
+      }
+    };
+    fetchUserLibrary();
+
+  }, [currentUser]);
+
   const handleCategoryClick = (category) => {
-    navigate(`/category/${category.toLowerCase()}`); // Navigate to the category page
+    navigate(`/category/${category.toLowerCase()}`); 
   };
 
   return (
@@ -61,8 +119,14 @@ function Home() {
           </button>
         </section>
 
-        {/* Book Carousel Section */}
-        <BookCarousel books={books} />
+        <BookCarousel books={userLibrary} title="Your Library" />
+        {favoriteBooks.length >= 0 && (
+          <BookCarousel books={favoriteBooks} title="Your Favorite Shelves" />
+        )}
+        <BookCarousel books={books} title="3d Books" />
+        <BookCarousel books={books} title="4d Books" />
+        <BookCarousel books={books} title="Best Seller" />
+        <BookCarousel books={books} title="Recommended By Cabin" />
       </main>
     </div>
   );

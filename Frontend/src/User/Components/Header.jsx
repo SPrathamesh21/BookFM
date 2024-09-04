@@ -33,25 +33,24 @@ function Header() {
       <SearchBar />
 
       <div className="flex items-center space-x-4">
-        <nav>
-          <Link to="/discover" className="mx-3 tracking-[0.2rem] bg-teal-400 p-2 px-4 text-black rounded-md font-bold hover:bg-teal-500">
-            Discover
+      <nav>
+        <Link to="/discover" className="mx-3 tracking-[0.2rem] bg-teal-400 p-2 px-4 text-black rounded-md font-bold hover:bg-teal-500">
+          Discover
+        </Link>
+
+        {isLoggedIn ? (
+          <span
+            className="mx-3 text-teal-400 cursor-pointer truncate max-w-[150px] overflow-hidden"
+            onClick={handleLogoutClick}
+          >
+            Welcome, {currentUser?.fullName || 'User'}
+          </span>
+        ) : (
+          <Link to="/login" className="mx-3 hover:text-teal-400">
+            Log In
           </Link>
-
-          {isLoggedIn ? (
-            <span
-              className="mx-3 text-teal-400 cursor-pointer"
-              onClick={handleLogoutClick}
-            >
-              Welcome, {currentUser?.fullName || 'User'}
-            </span>
-          ) : (
-            <Link to="/login" className="mx-3 hover:text-teal-400">
-              Log In
-            </Link>
-          )}
-        </nav>
-
+        )}
+      </nav>
         <div className="relative cursor-pointer" onClick={handleNotificationClick}>
           <FaBell className="text-teal-400 text-2xl" />
           {notificationCount > 0 && (
