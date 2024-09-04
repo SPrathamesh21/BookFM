@@ -35,56 +35,64 @@ function Home() {
     const fetchUserLibrary = async () => {
       if (currentUser && currentUser.userId) {
         try {
-          const [libraryResponse, favoritesResponse] = await Promise.all([
+          // Fetch user library, favorites, and all books
+          const [libraryResponse, favoritesResponse, booksResponse] = await Promise.all([
             axios.get(`/get-user-library/${currentUser.userId}`),
-            axios.get(`/get-favorites/${currentUser.userId}`)
+            axios.get(`/get-favorites/${currentUser.userId}`),
+            axios.get(`/get-books`)
           ]);
-
+  
           const libraryBooks = libraryResponse.data;
-          setUserLibrary(libraryBooks);
-          console.log('libraybooks', libraryBooks)
           const favoriteBooksData = favoritesResponse.data.favorites;
-          console.log('favoritesbooksData', favoriteBooksData)
-          // Filter the favorite books to match the criteria
-          const filteredFavoriteBooks = favoriteBooksData.filter(book => {
-            const isBookInLibrary = libraryBooks.some(libBook => {
-              // console.log('libbooks', libBook, libBook._id, book, book._id)
-              libBook._id === book._id});
-            return isBookInLibrary;
-          });
-          console.log('filterdataq', filteredFavoriteBooks)
-          // Group by category and count books in each category
+          const allBooks = booksResponse.data;
+  
+          setUserLibrary(libraryBooks);
+  
+          // Count books in each category from the books model
           const categoryCounts = {};
-          filteredFavoriteBooks.forEach(book => {
-            book.category.forEach(cat => {
+          allBooks.forEach(book => {
+            const categories = Array.isArray(book.category) ? book.category : [book.category];
+            categories.forEach(cat => {
               categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
             });
           });
-
-          // Only include books from categories with 5 or more books
-          const filteredBooksByCategory = filteredFavoriteBooks.filter(book => 
-            book.category.some(cat => categoryCounts[cat] >= 5)
+  
+          // Filter favorite books that are in the user library
+          const filteredFavoriteBooks = favoriteBooksData.filter(book =>
+            libraryBooks.some(libBook => libBook._id === book._id)
           );
-
-          // Check if there are at least 2 different categories
+          console.log('filterbooks', filteredFavoriteBooks)
+          // Only include books from categories with at least 5 books in the books model
+          const filteredBooksByCategory = filteredFavoriteBooks.filter(book => {
+            const categories = Array.isArray(book.category) ? book.category : [book.category];
+            return categories.some(cat => categoryCounts[cat] >= 5);
+          });
+          console.log('filtered', filteredBooksByCategory)
+          // Ensure there are at least 2 different categories
           const categoriesInFavorites = new Set(
-            filteredBooksByCategory.flatMap(book => book.category)
+            filteredBooksByCategory.flatMap(book => {
+              const categories = Array.isArray(book.category) ? book.category : [book.category];
+              return categories;
+            })
           );
-
+          console.log('categoryinfav', categoriesInFavorites)
           if (categoriesInFavorites.size >= 2) {
+            console.log('hdf')
             setFavoriteBooks(filteredBooksByCategory);
           } else {
             setFavoriteBooks([]);
           }
-
+  
         } catch (error) {
           console.error('Error fetching user library or favorites:', error);
         }
       }
     };
     fetchUserLibrary();
-
   }, [currentUser]);
+  
+  
+  
 
   const handleCategoryClick = (category) => {
     navigate(`/category/${category.toLowerCase()}`); 
@@ -120,7 +128,7 @@ function Home() {
         </section>
 
         <BookCarousel books={userLibrary} title="Your Library" />
-        {favoriteBooks.length >= 0 && (
+        {favoriteBooks.length > 0 && (
           <BookCarousel books={favoriteBooks} title="Your Favorite Shelves" />
         )}
         <BookCarousel books={books} title="3d Books" />
