@@ -1,6 +1,6 @@
 const express = require('express');
 const multer = require('multer');
-const { addBook, getAllBooks, updateEbook, getEbookById, searchBooks } = require('../controllers/AdminbookController');
+const { addBook, getAllBooks, updateEbook, getEbookById, searchBooks, createNotification } = require('../controllers/AdminbookController');
 const router = express.Router();
 
 // Set up storage for multer to handle EPUB files
@@ -18,6 +18,6 @@ router.put('/update_ebook/:id', upload.single('ebookFile'), updateEbook);
 
 router.get('/search', searchBooks);
 
-
+router.post('/notification', createNotification);
 
 module.exports = router;

@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const { GridFSBucket } = require('mongodb');
 const Book = require('../models/AdminbookModel');
 const moment = require('moment-timezone');
+const Notification =require('../models/AdminNotification')
 
 //add books 
 const addBook = async (req, res) => {
@@ -233,6 +234,29 @@ const searchBooks = async (req, res) => {
   }
 };
 
+// Create a new notification
+const createNotification = async (req, res) => {
+  try {
+    const { title, description } = req.body;
+    const files = req.body.files; // Assuming Base64-encoded files are sent
+    if (!title || !description || !files) {
+      return res.status(200).json({ error: 'All fields are required' });
+    }
 
+    // Create a new notification
+    const newNotification = new Notification({
+      title,
+      description,
+      files, // Store Base64 strings or paths
+    });
 
-module.exports = { addBook, getAllBooks, updateEbook, getEbookById, searchBooks};
+    await newNotification.save();
+
+    res.status(201).json({ success: true, message: 'Notification created successfully', notification: newNotification });
+  } catch (error) {
+    console.error('Error creating notification:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+module.exports = { addBook, getAllBooks, updateEbook, getEbookById, searchBooks, createNotification};
