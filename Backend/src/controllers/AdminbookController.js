@@ -216,7 +216,7 @@ const updateEbook = async (req, res) => {
 // Search books based on query
 const searchBooks = async (req, res) => {
   const { query } = req.query;
-
+  console.log('query', query)
   if (!query) {
     return res.status(400).json({ message: 'Search query is required' });
   }
@@ -224,8 +224,11 @@ const searchBooks = async (req, res) => {
   try {
     // Perform a case-insensitive search on the title field
     const books = await Book.find({
-      title: { $regex: query, $options: 'i' } // Case-insensitive search
-    }).limit(10); // Limit results to avoid overwhelming the client
+      $or: [
+          { bookName: { $regex: query, $options: 'i' } },
+          { author: { $regex: query, $options: 'i' } }
+      ]
+  }).select('bookName author _id');
 
     res.json(books);
   } catch (error) {

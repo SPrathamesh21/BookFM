@@ -48,7 +48,7 @@ const EditBookList = () => {
   const fetchSuggestions = async (query) => {
     if (query.trim() !== '') {
       try {
-        const response = await axios.get('/api/books/search', { // Ensure this endpoint is correct
+        const response = await axios.get('/api/books/search', { 
           params: { query }
         });
         setSearchSuggestions(response.data);
@@ -195,20 +195,22 @@ const EditBookList = () => {
           )}
         </div>
 
+       
+
         {/* Suggestions Dropdown */}
-        {searchSuggestions.length > 0 && (
-          <div className="absolute top-full mt-2 w-full bg-white text-black rounded-md shadow-lg z-10 border-2 border-black">
-            {searchSuggestions.map((suggestion, index) => (
-              <div
-                key={suggestion._id}
-                className={`cursor-pointer px-4 py-2 ${index === activeSuggestionIndex ? 'bg-gray-200' : ''} hover:bg-gray-200 transition-colors duration-150 transform hover:scale-105 active:scale-95`}
-                onClick={() => handleSuggestionClick(suggestion._id)}
-              >
-                <span className="font-bold">{suggestion.title}</span>
-              </div>
-            ))}
-          </div>
-        )}
+      {searchSuggestions.length > 0 && (
+        <ul className="absolute top-full mt-2 w-full bg-gray-800 text-gray-100 rounded-md shadow-lg max-h-60 overflow-y-auto z-10">
+          {searchSuggestions.slice(0, 10).map((suggestion) => (
+            <li 
+              key={suggestion._id} 
+              className="p-2 hover:bg-gray-700 cursor-pointer"
+              onClick={() => handleSuggestionClick(suggestion._id)} 
+            >
+              {suggestion.bookName} by {suggestion.author}
+            </li>
+          ))}
+        </ul>
+      )}
       </div>
 
       {/* Books Grid */}
