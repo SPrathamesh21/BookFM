@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faHome, faPlus, faEdit } from '@fortawesome/free-solid-svg-icons';
+import { faHome, faPlus, faEdit, faBell } from '@fortawesome/free-solid-svg-icons';
 import './SideNav.css'; // Import the CSS file
 
 // eslint-disable-next-line react/prop-types
@@ -41,6 +41,10 @@ const SideNav = () => {
 
         <AnimatedIcon icon={faEdit} label="Edit E-Book" to="/admin_panel/EditEBookPage" />
         <hr />
+
+        <AnimatedIcon icon={faBell } label="Notification" to="/admin_panel/Notification" />
+        <hr />
+
 
       </ul>
     </div>

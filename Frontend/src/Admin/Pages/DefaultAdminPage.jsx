@@ -6,6 +6,7 @@ import WelcomeAdmin from "../Components/WelcomAdmin/WelcomeAdmin";
 import EditEbook from "../Components/EditEBook/EditEBook";
 import EditBookList from "../Components/EditEBook/EditEBookPage";
 import NotFound from "../../NotFound"
+import Notification from "../Components/Notification/Notification";
 
 const Layout = () => {
   return (
@@ -25,6 +26,7 @@ const Layout = () => {
             <Route path="/AddEBook" element={<AddEBook />} />
             <Route path="/EditEBook/:id" element={<EditEbook />} />
             <Route path="/EditEBookPage" element={<EditBookList />} />
+            <Route path="/Notification"  element={<Notification />} />
             <Route path="/404" element={<NotFound />} /> {/* Explicitly define the 404 route */}
             <Route path="*" element={<Navigate to="/404" replace />} /> {/* Catch-all route for undefined paths */}
     

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "../../../../axiosConfig";
 import { toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate  } from 'react-router-dom';
 import { FaEdit, FaTrashAlt } from "react-icons/fa";
 
 function Loader() {
@@ -105,10 +105,16 @@ function EditEbook() {
       }
     } else if (name === "ebookFile") {
       const file = files[0];
-      if (file && file.type === "application/epub+zip") {
-        setEbookFile({ name: file.name, file });
-      } else {
-        toast.error("Please upload a valid EPUB file.");
+      if (file) {
+        if (file.type === "application/epub+zip") {
+          // Handle EPUB file
+          setEbookFile({ name: file.name, file });
+        } else if (file.type === "application/pdf") {
+          // Handle PDF file
+          setEbookFile({ name: file.name, file });
+        } else {
+          toast.error("Please upload a valid EPUB or PDF file.");
+        }
       }
     }
   };
@@ -297,7 +303,7 @@ function EditEbook() {
         <input
           type="file"
           name="ebookFile"
-          accept="application/epub+zip"
+          accept=".epub,.pdf"
           onChange={handleFileChange}
         />
         {ebookFile && <p>Selected EPUB: {ebookFile.name}</p>}

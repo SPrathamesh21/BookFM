@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from '../../../axiosConfig'; 
+import axios from '../../../axiosConfig';
 import BookCarousel from '../Components/BookCarousel';
 import '../../Style/BookCarousel.css';
 import { AuthContext } from '../../Context/authContext';
@@ -11,24 +11,91 @@ function Home() {
   const [categories, setCategories] = useState([]);
   const [userLibrary, setUserLibrary] = useState([]);
   const [favoriteBooks, setFavoriteBooks] = useState([]);
-  const navigate = useNavigate(); 
+  const [carouselCategories, setCarouselCategories] = useState({ category3D: '', category4D: '' });
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
   const { currentUser } = useContext(AuthContext);
+
+  // Function to randomly select a category with at least 5 books
+  const getRandomCategory = (categoriesWithCount, excludeCategory = null) => {
+    const validCategories = Object.keys(categoriesWithCount).filter(
+      (cat) => categoriesWithCount[cat] >= 5 && cat !== excludeCategory
+    );
+    return validCategories[Math.floor(Math.random() * validCategories.length)];
+  };
 
   useEffect(() => {
     const fetchBooks = async () => {
       try {
-        const response = await axios.get('/get-books'); 
-        const booksData = response.data;
+        const [booksResponse, userLibraryResponse, favoritesResponse] = await Promise.all([
+          axios.get('/get-books'),
+          currentUser ? axios.get(`/get-user-library/${currentUser.userId}`) : Promise.resolve({ data: [] }),
+          currentUser ? axios.get(`/get-favorites/${currentUser.userId}`) : Promise.resolve({ data: { favorites: [] } })
+        ]);
+
+        const booksData = booksResponse.data;
         setBooks(booksData);
         // Sort books by count in descending order (highest count first)
         const sortedBooks = booksData.sort((a, b) => b.count - a.count);
         setSortBooks(sortedBooks);
 
-        const allCategories = booksData.flatMap(book => book.category);
-        const uniqueCategories = [...new Set(allCategories)]; 
+        // Filter books by category count
+        const categoryCounts = booksData.reduce((acc, book) => {
+          const categories = Array.isArray(book.category) ? book.category : [book.category];
+          categories.forEach((cat) => {
+            if (cat) acc[cat] = (acc[cat] || 0) + 1;
+          });
+          return acc;
+        }, {});
+
+        const uniqueCategories = Object.keys(categoryCounts);
         setCategories(uniqueCategories);
+
+        // Select random categories for 3D and 4D carousels
+        const category3D = getRandomCategory(categoryCounts);
+        const category4D = getRandomCategory(categoryCounts, category3D);
+
+        setCarouselCategories({ category3D, category4D });
+
+        // User Library and Favorites
+        const libraryBooks = userLibraryResponse.data;
+        setUserLibrary(libraryBooks);
+
+        const favoriteBooksData = favoritesResponse.data.favorites;
+
+        // Filter the favorite books to match the criteria
+        const filteredFavoriteBooks = favoriteBooksData.filter(book =>
+          libraryBooks.some(libBook => libBook._id === book._id)
+        );
+
+        // Group by category and count books in each category
+        const categoryCountsFavorites = {};
+        filteredFavoriteBooks.forEach(book => {
+          book.category.forEach(cat => {
+            categoryCountsFavorites[cat] = (categoryCountsFavorites[cat] || 0) + 1;
+          });
+        });
+
+        // Only include books from categories with 5 or more books
+        const filteredBooksByCategory = filteredFavoriteBooks.filter(book =>
+          book.category.some(cat => categoryCountsFavorites[cat] >= 5)
+        );
+
+        // Check if there are at least 2 different categories
+        const categoriesInFavorites = new Set(
+          filteredBooksByCategory.flatMap(book => book.category)
+        );
+
+        if (categoriesInFavorites.size >= 2) {
+          setFavoriteBooks(filteredBooksByCategory);
+        } else {
+          setFavoriteBooks([]);
+        }
+
       } catch (error) {
-        console.error('Error fetching books:', error);
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -45,13 +112,13 @@ function Home() {
             axios.get(`/get-favorites/${currentUser.userId}`),
             axios.get(`/get-books`)
           ]);
-  
+
           const libraryBooks = libraryResponse.data;
           const favoriteBooksData = favoritesResponse.data.favorites;
           const allBooks = booksResponse.data;
-  
+
           setUserLibrary(libraryBooks);
-  
+
           // Count books in each category from the books model
           const categoryCounts = {};
           allBooks.forEach(book => {
@@ -60,7 +127,7 @@ function Home() {
               categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
             });
           });
-  
+
           // Filter favorite books that are in the user library
           const filteredFavoriteBooks = favoriteBooksData.filter(book =>
             libraryBooks.some(libBook => libBook._id === book._id)
@@ -86,7 +153,7 @@ function Home() {
           } else {
             setFavoriteBooks([]);
           }
-  
+
         } catch (error) {
           console.error('Error fetching user library or favorites:', error);
         }
@@ -94,13 +161,21 @@ function Home() {
     };
     fetchUserLibrary();
   }, [currentUser]);
-  
-  
-  
+
+
+
 
   const handleCategoryClick = (category) => {
-    navigate(`/category/${category.toLowerCase()}`); 
+    navigate(`/category/${category.toLowerCase()}`);
   };
+
+  const recommendedBooks = useMemo(() => {
+    return books.filter(book => book.recommendedByCabin === 'Yes');
+  }, [books]);
+
+  if (loading) {
+    return <div className="text-center text-gray-100">Loading...</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-800 text-gray-100 flex flex-col">
@@ -131,14 +206,43 @@ function Home() {
           </button>
         </section>
 
+        {/* User's Library Carousel */}
         <BookCarousel books={userLibrary} title="Your Library" />
+
         {favoriteBooks.length > 0 && (
           <BookCarousel books={favoriteBooks} title="Your Favorite Shelves" />
         )}
-        <BookCarousel books={books} title="3d Books" />
-        <BookCarousel books={books} title="4d Books" />
+
+        {/* 3D Books Carousel */}
+        {carouselCategories.category3D && (
+          <BookCarousel
+            books={books.filter(book =>
+              book.category.includes(carouselCategories.category3D)
+            )}
+            title={`${carouselCategories.category3D} Books`}
+          />
+        )}
+
+        {/* 4D Books Carousel */}
+        {carouselCategories.category4D && (
+          <BookCarousel
+            books={books.filter(book =>
+              book.category.includes(carouselCategories.category4D)
+            )}
+            title={`${carouselCategories.category4D} Books`}
+          />
+        )}
+
+
+
         <BookCarousel books={sortBooks} title="Best Seller" />
-        <BookCarousel books={books} title="Recommended By Cabin" />
+
+
+        {/* Recommended By Cabin Carousel */}
+        <BookCarousel
+          books={books.filter(book => book.recommendedByCabin === 'Yes')}
+          title="Recommended By Cabin"
+        />
       </main>
     </div>
   );

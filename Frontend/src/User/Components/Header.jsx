@@ -39,12 +39,13 @@ function Header() {
         </Link>
 
         {isLoggedIn ? (
-          <span
-            className="mx-3 text-teal-400 cursor-pointer truncate max-w-[150px] overflow-hidden"
-            onClick={handleLogoutClick}
-          >
-            Welcome, {currentUser?.fullName || 'User'}
-          </span>
+          <button
+          className="mx-3 text-teal-400 cursor-pointer truncate overflow-hidden whitespace-nowrap max-w-[150px]" // Adjust max-w as needed
+          onClick={handleLogoutClick}
+        >
+          Welcome, {currentUser?.fullName || 'User'}
+        </button>
+        
         ) : (
           <Link to="/login" className="mx-3 hover:text-teal-400">
             Log In

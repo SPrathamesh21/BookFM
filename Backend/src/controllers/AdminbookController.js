@@ -5,9 +5,10 @@ const { GridFSBucket } = require('mongodb');
 const Book = require('../models/AdminbookModel');
 const moment = require('moment-timezone');
 
+//add books 
 const addBook = async (req, res) => {
   try {
-    const { bookName, author, description, category } = req.body;
+    const { bookName, author, description, category, recommendedByCabin } = req.body;
     const coverImages = req.body.coverImages; // Already Base64-encoded images
     const bookFile = req.file; // Handle EPUB file
 
@@ -16,10 +17,7 @@ const addBook = async (req, res) => {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
-    // Validate EPUB file
-    if (bookFile.mimetype !== 'application/epub+zip') {
-      return res.status(400).json({ error: 'Invalid file type. Please upload an EPUB file.' });
-    }
+    
 
     // Handle file upload to GridFS
     const bucket = new GridFSBucket(mongoose.connection.db, {
@@ -40,6 +38,7 @@ const newBook = new Book({
   category, // Added category
   dateAdded: currentISTTime, // Use formatted IST time
   coverImages,
+  recommendedByCabin,
   EPUBbase64: { id: undefined, filename: undefined } // Ensure EPUBbase64 is updated later
 });
 
@@ -65,6 +64,7 @@ const newBook = new Book({
 };
 
 
+//Get All Books
 const getAllBooks = async (req, res) => {
   const { offset = 0, limit = 10 } = req.query;
   try {
@@ -108,12 +108,11 @@ const getEbookById = async (req, res) => {
 };
 
 
-
+//Update the Books
 const updateEbook = async (req, res) => {
   try {
-    const { title, author, description, category } = req.body;
-    const coverImages = req.body.coverImages; // Handle Base64-encoded images
-    const ebookFile = req.file; // Handle EPUB file
+    const { title, author, description, category, coverImages } = req.body;
+    const ebookFile = req.file; // Handle EPUB/PDF file
 
     // Validate required fields
     if (!title || !author || !description || !category || !coverImages) {
@@ -135,49 +134,67 @@ const updateEbook = async (req, res) => {
       return res.status(404).json({ message: 'Book not found' });
     }
 
-    // Handle EPUB file upload to GridFS if a new file is provided
-    let epubFileId = book.EPUBbase64 ? book.EPUBbase64.id : undefined;
+    // Handle file upload to GridFS if a new file is provided
+    let fileId = book.EPUBbase64 ? book.EPUBbase64.id : undefined;
+    let fileType = book.EPUBbase64 ? book.EPUBbase64.type : undefined;
+
+    const bucket = new GridFSBucket(mongoose.connection.db, {
+      bucketName: 'epubs',
+      chunkSizeBytes: 13 * 1024 * 1024,
+    });
+
     if (ebookFile) {
-      if (ebookFile.mimetype !== 'application/epub+zip') {
-        return res.status(400).json({ error: 'Invalid file type. Please upload an EPUB file.' });
-      }
-
-      const bucket = new GridFSBucket(mongoose.connection.db, {
-        bucketName: 'epubs',
-        chunkSizeBytes: 13 * 1024 * 1024,
-      });
-
-      const uploadStream = bucket.openUploadStream(ebookFile.originalname);
-      uploadStream.end(ebookFile.buffer);
-
-      uploadStream.on('finish', async () => {
-        epubFileId = uploadStream.id; // Get the ID of the uploaded EPUB file
-
-        // Update book details
-        book.bookName = title;
-        book.author = author;
-        book.description = description;
-        book.category = category;
-        book.coverImages = parsedCoverImages; // Replace cover images
-
-        // Update EPUB file if a new one was uploaded
-        if (epubFileId) {
-          book.EPUBbase64 = {
-            id: epubFileId,
-            filename: ebookFile.originalname,
-          };
+      if (ebookFile.mimetype === 'application/epub+zip' || ebookFile.mimetype === 'application/pdf') {
+        // Delete old file from GridFS if it exists and is valid
+        if (fileId) {
+          try {
+            await bucket.delete(fileId);
+          } catch (error) {
+            if (error.message.includes('File not found for id')) {
+              console.warn(`File not found for id: ${fileId}. Continuing with upload.`);
+            } else {
+              throw error; // Re-throw any other error
+            }
+          }
         }
 
-        await book.save(); // Save the updated book document
-        res.status(200).json({ message: 'Book updated successfully', book });
-      });
+        // Upload new file to GridFS
+        const uploadStream = bucket.openUploadStream(ebookFile.originalname);
+        uploadStream.end(ebookFile.buffer);
 
-      uploadStream.on('error', (error) => {
-        console.error('Error uploading EPUB file:', error);
-        res.status(500).json({ error: 'An error occurred while uploading the EPUB file' });
-      });
+        uploadStream.on('finish', async () => {
+          fileId = uploadStream.id; // Get the ID of the uploaded file
+          fileType = ebookFile.mimetype;
+
+          // Update book details
+          book.bookName = title;
+          book.author = author;
+          book.description = description;
+          book.category = category;
+          book.coverImages = parsedCoverImages; // Replace cover images
+
+          // Update file information if a new one was uploaded
+          if (fileId) {
+            book.EPUBbase64 = {
+              id: fileId,
+              filename: ebookFile.originalname,
+              type: fileType, // Store the file type
+            };
+          }
+
+          await book.save(); // Save the updated book document
+          res.status(200).json({ message: 'Book updated successfully', book });
+        });
+
+        uploadStream.on('error', (error) => {
+          console.error('Error uploading file:', error);
+          res.status(500).json({ error: 'An error occurred while uploading the file' });
+        });
+      } else {
+        return res.status(400).json({ error: 'Invalid file type. Please upload an EPUB or PDF file.' });
+      }
     } else {
-      // If no new EPUB file is uploaded, just update other book details
+      // If no new file is uploaded, just update other book details
       book.bookName = title;
       book.author = author;
       book.description = description;
@@ -187,12 +204,12 @@ const updateEbook = async (req, res) => {
       await book.save(); // Save the updated book document
       res.status(200).json({ message: 'Book updated successfully', book });
     }
-
   } catch (error) {
     console.error('Error updating ebook:', error);
     res.status(500).json({ error: 'An error occurred while updating the book' });
   }
 };
+
 
 
 // Search books based on query

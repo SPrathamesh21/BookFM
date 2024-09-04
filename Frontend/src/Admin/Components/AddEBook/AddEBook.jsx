@@ -15,6 +15,7 @@ function AddBook() {
     author: '',
     description: '',
     category: '', // Added category field
+    recommendedByCabin: 'No', // New field with default value
   });
   const [coverImages, setCoverImages] = useState([]);
   const [coverImagePreviews, setCoverImagePreviews] = useState([]);
@@ -46,21 +47,21 @@ function AddBook() {
     setShowImageInput(false);
   };
 
-  // Handle EPUB file input changes
-  const handleFileChange = (e) => {
+   // Handle EPUB/PDF file input changes
+   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (file && file.type === 'application/epub+zip') {
+    if (file && (file.type === 'application/epub+zip' || file.type === 'application/pdf')) {
       setFile(file);
       setFileName(file.name);
     } else {
-      toast.error('Please upload a valid EPUB file');
+      toast.error('Please upload a valid EPUB or PDF file');
       setFile(null);
       setFileName(null);
     }
   };
 
-  // Convert file to Base64
-  const convertFileToBase64 = (file) => {
+   // Convert file to Base64
+   const convertFileToBase64 = (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result);
@@ -95,13 +96,15 @@ function AddBook() {
       formData.append('author', bookData.author);
       formData.append('description', bookData.description);
       formData.append('category', bookData.category); // Add category
+      formData.append('recommendedByCabin', bookData.recommendedByCabin); // Add the new field
+
 
       // Append Base64 cover images
       base64Images.forEach((base64Image) => {
         formData.append('coverImages', base64Image);
       });
 
-      // Append EPUB file directly
+      // Append EPUB/pdf file directly
       if (file) {
         formData.append('bookFile', file);
       }
@@ -127,6 +130,7 @@ function AddBook() {
         description: '',
         dateAdded: '',
         category: '',
+        recommendedByCabin: 'No',
       });
       setCoverImages([]);
       setCoverImagePreviews([]);
@@ -303,13 +307,12 @@ function AddBook() {
 
 
       <div className="mb-4">
-        <label className="block text-black text-xl font-bold mb-2">EPUB File</label>
+        <label className="block text-black text-xl font-bold mb-2">Upload EPUB/PDF</label>
         <input
           type="file"
-          accept=".epub"
+          accept=".epub,.pdf"
           onChange={handleFileChange}
-          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-          required
+          className="w-full py-2 px-3 border rounded"
         />
         {fileName && (
           <div className="mt-2">
@@ -317,6 +320,27 @@ function AddBook() {
           </div>
         )}
       </div>
+
+      {/* New field for "Recommended by Cabin" */}
+      <div className="mb-4 relative">
+        <label className="block text-black text-xl font-bold mb-2">Recommended by Cabin</label>
+        <div className='relative'>
+        <select
+          name="recommendedByCabin"
+          value={bookData.recommendedByCabin}
+          onChange={handleChange}
+          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+        >
+          <option value="No">No</option>
+          <option value="Yes">Yes</option>
+        </select>
+        <FaChevronDown
+            className={`absolute right-3 top-1/2 transform -translate-y-1/2 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180' : ''
+              }`}
+          />
+        </div>
+      </div>
+
 
       <div className="flex justify-center mt-6">
         <button

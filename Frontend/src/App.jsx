@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { useState, useEffect} from 'react'
+import { BrowserRouter as Router, Route, Routes, Navigate} from "react-router-dom";
 import Home from './User/Pages/Home'
 import Header from './User/Components/Header'
 import React from "react";
@@ -13,6 +13,7 @@ import Login from './User/Pages/Login';
 import CategoryPage from './User/Pages/CategoryPage';
 import { ToastContainer } from 'react-toastify';
 import { AuthProvider } from './Context/authContext'
+import NotFound from './NotFound';
 
 function App() { 
   const [isMobile, setIsMobile] = useState(false); 
@@ -49,6 +50,9 @@ function App() {
         <Route path='/header' element={<Header />} />
         <Route path="/book/:bookId" element={<ExpandedView />} /> {/* New route */}
         <Route path="/admin_panel/*" element={<DefaultAdminPage />} />
+        <Route path="/404" element={<NotFound />} /> {/* Explicitly define the 404 route */}
+        <Route path="*" element={<Navigate to="/404" replace />} /> {/* Catch-all route for undefined paths */}
+
       </Routes>
         <ToastContainer />
         {shouldShowFooter && <Footer />}
