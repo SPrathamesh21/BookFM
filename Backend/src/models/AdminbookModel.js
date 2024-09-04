@@ -6,11 +6,12 @@ const bookSchema = new mongoose.Schema({
   description: { type: String, required: true },
   category: { type: String, required: true },
   dateAdded: { type: String, required: true },
-  coverImages: [String], // Array of Base64-encoded image strings
+  coverImages: [String],
   EPUBbase64: {
-    id: { type: mongoose.Schema.Types.ObjectId, ref: 'epubs', required: true }, // GridFS ID
-    filename: { type: String, required: true } // Filename of the EPUB file
-  }
+    id: { type: mongoose.Schema.Types.ObjectId, ref: 'epubs', required: true }, 
+    filename: { type: String, required: true } 
+  },
+  count: { type: Number, default: 0 } 
 });
 
 const Book = mongoose.model('Book', bookSchema);

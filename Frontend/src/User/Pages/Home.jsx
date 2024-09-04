@@ -7,6 +7,7 @@ import { AuthContext } from '../../Context/authContext';
 
 function Home() {
   const [books, setBooks] = useState([]);
+  const [sortBooks, setSortBooks] = useState([])
   const [categories, setCategories] = useState([]);
   const [userLibrary, setUserLibrary] = useState([]);
   const [favoriteBooks, setFavoriteBooks] = useState([]);
@@ -19,6 +20,9 @@ function Home() {
         const response = await axios.get('/get-books'); 
         const booksData = response.data;
         setBooks(booksData);
+        // Sort books by count in descending order (highest count first)
+        const sortedBooks = booksData.sort((a, b) => b.count - a.count);
+        setSortBooks(sortedBooks);
 
         const allCategories = booksData.flatMap(book => book.category);
         const uniqueCategories = [...new Set(allCategories)]; 
@@ -133,7 +137,7 @@ function Home() {
         )}
         <BookCarousel books={books} title="3d Books" />
         <BookCarousel books={books} title="4d Books" />
-        <BookCarousel books={books} title="Best Seller" />
+        <BookCarousel books={sortBooks} title="Best Seller" />
         <BookCarousel books={books} title="Recommended By Cabin" />
       </main>
     </div>

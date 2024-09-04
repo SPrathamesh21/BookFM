@@ -20,7 +20,8 @@ exports.addToLibrary = async (req, res) => {
     // Add the book to the user's library
     const newEntry = new UserLibrary({ userId, bookId });
     await newEntry.save();
-
+    // Increment the book count
+    await Book.findByIdAndUpdate(bookId, { $inc: { count: 1 } });
     res.status(201).json({ success: true, message: 'Book added to your library successfully' });
   } catch (error) {
     console.error('Error adding book to library:', error);
