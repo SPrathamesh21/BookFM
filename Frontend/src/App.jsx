@@ -14,6 +14,10 @@ import CategoryPage from './User/Pages/CategoryPage';
 import { ToastContainer } from 'react-toastify';
 import { AuthProvider } from './Context/authContext'
 import NotFound from './NotFound';
+import PdfViewerComponent from './User/Components/PdfViewerComponent';
+import DocumentViewer from './User/Components/DocumentViewer';
+import EPUB from './User/Components/EpubViewerComponent';
+import EBookReader from './User/Components/EpubViewerComponent';
 
 function App() { 
   const [isMobile, setIsMobile] = useState(false); 
@@ -48,6 +52,7 @@ function App() {
         <Route path='/signup' element={<Signup />} />
         <Route path='/login' element={<Login />} />
         <Route path='/header' element={<Header />} />
+        <Route path='/inner' element={<EBookReader />} />
         <Route path="/book/:bookId" element={<ExpandedView />} /> {/* New route */}
         <Route path="/admin_panel/*" element={<DefaultAdminPage />} />
         <Route path="/404" element={<NotFound />} /> {/* Explicitly define the 404 route */}

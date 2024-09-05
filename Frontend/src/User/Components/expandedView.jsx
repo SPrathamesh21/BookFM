@@ -36,6 +36,10 @@ const ExpandedView = () => {
     }
   }, [book]);
 
+  const handleThumbnailClick = (index) => {
+    setCurrentImageIndex(index);
+  };
+
   const handleShare = () => {
     const url = window.location.href;
 
@@ -117,7 +121,7 @@ const ExpandedView = () => {
   return (
     <div className="relative flex flex-col md:flex-row p-6 md:p-8 rounded-xl bg-gradient-to-r from-gray-100 to-white max-w-4xl mx-auto my-5 shadow-lg transform transition-transform ease-linear cursor-pointer overflow-hidden">
       <button 
-        className={`fixed top-5 right-5 bg-blue-500 text-white rounded-full w-12 h-12 flex items-center justify-center cursor-pointer shadow-md transition-colors duration-300 ${isHover ? 'bg-blue-700 shadow-lg' : ''}`}
+        className={`fixed top-5 right-5 bg-blue-500 text-white rounded-full w-12 h-12 z-10 flex items-center justify-center cursor-pointer shadow-md transition-colors duration-300 ${isHover ? 'bg-blue-700 shadow-lg' : ''}`}
         onClick={handleShare}
         onMouseEnter={() => setIsHover(true)}
         onMouseLeave={() => setIsHover(false)}
@@ -126,7 +130,8 @@ const ExpandedView = () => {
         <FaShareAlt size={24} />
       </button>
 
-      <div className="relative w-64 h-96 md:w-96 md:h-96 mr-0 md:mr-8 rounded-xl overflow-hidden">
+      {/* Main image display */}
+      <div className="w-full md:w-1/3 h-96 rounded-xl overflow-hidden relative">
         {book.coverImages && book.coverImages.map((image, index) => (
           <img 
             key={index}
@@ -145,24 +150,41 @@ const ExpandedView = () => {
         ></div>
       </div>
 
-      <div className="flex flex-col justify-center w-full">
-        <h2 className="text-3xl md:text-4xl font-bold mb-3 text-gray-800" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.1)' }}>
-          {book.bookName}
-        </h2>
-        <h4 className="text-xl md:text-2xl italic mb-4 text-gray-600">by {book.author}</h4>
-        <p className="text-base md:text-lg mb-5 text-gray-700 leading-relaxed max-h-32 overflow-y-auto">
-          Book Description: <span><br/></span>{book.description}
-        </p>
-        <p className="text-base md:text-lg text-gray-600 mb-5">Usual time to read: 5 hours</p>
-        <button 
-          className={`mt-4 md:mt-5 py-2 px-4 bg-blue-500 text-white rounded-lg font-bold text-lg flex items-center justify-center transition-transform duration-300 ${isReadHover ? 'bg-blue-700 transform scale-105' : ''} w-full md:w-auto`}
-          onClick={addToLibrary}
-          onMouseEnter={() => setIsReadHover(true)}
-          onMouseLeave={() => setIsReadHover(false)}
-        >
-          <FaBookOpen size={20} className="mr-2" />
-          Read
-        </button>
+      {/* Content */}
+      <div className="flex flex-col justify-between w-full md:w-2/3 md:pl-8">
+        {/* Thumbnail carousel */}
+        <div className="flex mt-4 md:mt-0">
+          {book.coverImages && book.coverImages.map((image, index) => (
+            <img 
+              key={index}
+              src={image} 
+              alt={`${book.bookName} thumbnail ${index + 1}`} 
+              className={`w-16 h-16 md:w-20 md:h-20 rounded-lg object-cover m-1 cursor-pointer transition-opacity duration-300 ${index === currentImageIndex ? 'opacity-100' : 'opacity-50'}`}
+              onClick={() => handleThumbnailClick(index)}
+              onError={() => console.error(`Failed to load thumbnail: ${image}`)}
+            />
+          ))}
+        </div>
+
+        {/* Book Details */}
+        <div className="flex flex-col justify-center w-full">
+          <h2 className="text-3xl md:text-4xl font-bold mb-3 text-gray-800" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.1)' }}>
+            {book.bookName}
+          </h2>
+          <h4 className="text-xl md:text-2xl italic mb-4 text-gray-600">by {book.author}</h4>
+          <p className="text-base md:text-lg mb-5 text-gray-700 leading-relaxed max-h-32 overflow-y-auto">
+            Book Description: <span><br/></span>{book.description}
+          </p>
+          <p className="text-base md:text-lg text-gray-600 mb-5">Usual time to read: 5 hours</p>
+          <button 
+            className={`mt-4 md:mt-5 py-2 px-4 bg-blue-500 text-white rounded-lg font-bold text-lg flex items-center justify-center transition-transform duration-300 ${isReadHover ? 'bg-blue-700 transform scale-105' : ''} w-full md:w-auto`}
+            onMouseEnter={() => setIsReadHover(true)}
+            onMouseLeave={() => setIsReadHover(false)}
+          >
+            <FaBookOpen size={20} className="mr-2" />
+            Read
+          </button>
+        </div>
       </div>
     </div>
   );

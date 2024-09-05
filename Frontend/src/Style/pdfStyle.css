@@ -1,0 +1,8 @@
+.pdf-viewer {
+  overflow: auto; /* Enable scrolling */
+  scrollbar-width: none; /* For Firefox */
+}
+
+.pdf-viewer::-webkit-scrollbar {
+  display: none; /* For Chrome, Safari, and newer versions of Edge */
+}
