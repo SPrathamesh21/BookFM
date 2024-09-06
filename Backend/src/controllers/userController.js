@@ -1,5 +1,7 @@
 const Book = require('../models/AdminbookModel')
 const User = require('../models/User')
+const Notification = require('../models/AdminNotification'); 
+
 // Get all books
 exports.getBooks = async (req, res) => {
   try {
@@ -94,3 +96,85 @@ exports.getFavoriteBooks = async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to get favorite books.', error });
   }
 };
+
+// Controller to get notification data
+exports.getNotifications = async (req, res) => {
+  try {
+    // Find notifications associated with the user
+    const notifications = await Notification.find({}).sort({ dateAdded: -1 });
+    
+    const userNotifications = notifications.map(notification => {
+      // Find the user's read status
+      const readStatus = notification.readStatus.find(status => status.userId.toString() === req.user.userId.toString());
+      return {
+        ...notification.toObject(),
+        read: readStatus ? readStatus.read : false
+      };
+    });
+
+    const unreadCount = userNotifications.filter(notification => !notification.read).length;
+    
+    res.status(200).json({ notifications: userNotifications, unreadCount });
+  } catch (error) {
+    console.error('Failed to fetch notifications:', error);
+    res.status(500).json({ error: 'Failed to fetch notifications' });
+  }
+};
+
+// Controller to update the read status of a notification
+// controllers/notificationController.js
+
+exports.updateNotification = async (req, res) => {
+  const { id } = req.params;  // Notification ID
+  const { read } = req.body;  // Read status
+  const userId = req.user.userId;  // Authenticated user ID
+
+  if (!id || typeof read !== 'boolean') {
+    return res.status(400).json({ success: false, message: 'Invalid data' });
+  }
+
+  try {
+    // Step 1: Check if the user has an existing entry in the readStatus array
+    const notification = await Notification.findById(id);
+    
+    if (!notification) {
+      return res.status(404).json({ success: false, message: 'Notification not found' });
+    }
+
+    // Check if the readStatus already exists for this user
+    const existingReadStatus = notification.readStatus.find(status => status.userId.equals(userId));
+
+    if (existingReadStatus) {
+      // If the readStatus exists, update it
+      existingReadStatus.read = read;
+    } else {
+      // If it doesn't exist, add a new entry to the readStatus array
+      notification.readStatus.push({ userId, read });
+    }
+
+    // Save the updated notification
+    const updatedNotification = await notification.save();
+
+    // Step 2: Update the user's notification read status
+    const updatedUser = await User.findOneAndUpdate(
+      { _id: userId, 'notifications.notificationId': id },  // Find the user with the notification
+      { $set: { 'notifications.$.read': read } },  // Update the read status of the specific notification
+      { new: true }  // Return the updated document
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ success: false, message: 'User notification not found' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Notification status updated successfully',
+      data: { notification: updatedNotification, user: updatedUser }
+    });
+  } catch (error) {
+    console.error('Error updating notification:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+

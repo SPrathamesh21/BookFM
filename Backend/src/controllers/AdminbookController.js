@@ -4,7 +4,9 @@ const mongoose = require('mongoose');
 const { GridFSBucket } = require('mongodb');
 const Book = require('../models/AdminbookModel');
 const moment = require('moment-timezone');
-const Notification =require('../models/AdminNotification')
+const Notification =require('../models/AdminNotification');
+const User = require('../models/User');
+
 
 //add books 
 const addBook = async (req, res) => {
@@ -23,7 +25,7 @@ const addBook = async (req, res) => {
     // Handle file upload to GridFS
     const bucket = new GridFSBucket(mongoose.connection.db, {
       bucketName: 'epubs',
-      chunkSizeBytes: 13 * 1024 * 1024
+      chunkSizeBytes: 1 * 1024 * 1024
     });
 
     const uploadStream = bucket.openUploadStream(bookFile.originalname);
@@ -237,23 +239,34 @@ const searchBooks = async (req, res) => {
   }
 };
 
+
 // Create a new notification
 const createNotification = async (req, res) => {
   try {
-    const { title, description } = req.body;
-    const files = req.body.files; // Assuming Base64-encoded files are sent
+    const { title, description, files } = req.body;
+
     if (!title || !description || !files) {
-      return res.status(200).json({ error: 'All fields are required' });
+      return res.status(400).json({ error: 'All fields are required' });
     }
 
     // Create a new notification
     const newNotification = new Notification({
       title,
       description,
-      files, // Store Base64 strings or paths
+      files
     });
 
+    // Save the notification
     await newNotification.save();
+
+    // Fetch all users
+    const users = await User.find();
+
+    // Update each user with the new notification
+    await Promise.all(users.map(async (user) => {
+      user.notifications.push({ notificationId: newNotification._id, read: false });
+      await user.save();
+    }));
 
     res.status(201).json({ success: true, message: 'Notification created successfully', notification: newNotification });
   } catch (error) {

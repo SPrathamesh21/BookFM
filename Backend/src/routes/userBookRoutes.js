@@ -3,8 +3,7 @@ const router = express.Router();
 const { getBookById, getBooks, getSearchedEbooks } = require('../controllers/userController');
 const { sendOtp, verifyOtpAndSignup, resendOtp, login } = require('../controllers/otpController');
 const { authenticateToken } = require('../middleware/authMiddleware');
-
-// Route to get all books
+const { getNotifications, updateNotification } = require('../controllers/userController');// Route to get all books
 router.get('/get-books', getBooks);
 
 // Route to get a book by ID
@@ -26,4 +25,11 @@ router.post('/logout', (req, res) => {
     res.clearCookie('authToken');
     res.json({ message: "Logged out successfully" });
 });
+
+//GET  Route for notification data
+router.get('/notifications', authenticateToken, getNotifications);
+router.put('/notifications/:id', authenticateToken, updateNotification);
+
+
+
 module.exports = router;
