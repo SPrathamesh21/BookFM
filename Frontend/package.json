@@ -23,6 +23,7 @@
     "axios": "^1.7.5",
     "crypto-js": "^4.2.0",
     "elasticlunr": "^0.9.5",
+    "epub.js": "^0.2.15",
     "epubjs": "^0.3.93",
     "flexsearch": "^0.7.43",
     "jquery": "^3.7.1",

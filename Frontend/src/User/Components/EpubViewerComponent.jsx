@@ -53,39 +53,38 @@ const EBookReader = () => {
                 height: '100%',
                 flow: 'paginated',
             });
-
-            rendition.display().then(() => {
+    
+            rendition.display().then(async () => {
                 setRendition(rendition);
-
-                rendition.book.locations.generate().then(() => {
+    
+                // Check if locations are already cached
+                const cachedLocations = localStorage.getItem('bookLocations');
+                if (cachedLocations) {
+                    rendition.book.locations.load(cachedLocations);
+                } else {
+                    await rendition.book.locations.generate();
                     const total = rendition.book.locations.total;
                     setTotalPages(total);
-                    const location = rendition.currentLocation();
-                    setCurrentPage(rendition.book.locations.percentageFromCfi(location.start.cfi) * total);
-                });
+                    localStorage.setItem('bookLocations', rendition.book.locations.save());
+                }
+    
+                const location = rendition.currentLocation();
+                setCurrentPage(rendition.book.locations.percentageFromCfi(location.start.cfi) * rendition.book.locations.total);
             });
-
+    
             rendition.on('relocated', (location) => {
                 const total = rendition.book.locations.total;
                 const currentPage = rendition.book.locations.percentageFromCfi(location.start.cfi) * total;
                 setCurrentPage(Math.ceil(currentPage));
                 setProgress((currentPage / total) * 100);
             });
-
-            // Fetch the table of contents
+    
             book.loaded.navigation.then(nav => {
                 setToc(nav.toc);
             });
-
-            // Ensure new chapters start on a new page
-            rendition.on('rendered', () => {
-                const chapters = book.spine.get();
-                chapters.forEach((chapter) => {
-                    chapter.element.style.pageBreakBefore = 'always';
-                });
-            });
         }
     }, [book]);
+    
 
     // Apply settings like background color, font, etc.
     useEffect(() => {
@@ -123,6 +122,18 @@ const EBookReader = () => {
             columnCount: settings.columnCount
         });
     };
+
+    const handleToCClick = async (href) => {
+        if (rendition) {
+            await rendition.display(href);
+            // Optionally, handle page calculation or scroll to ensure the correct page.
+            const location = rendition.currentLocation();
+            const total = rendition.book.locations.total;
+            const currentPage = rendition.book.locations.percentageFromCfi(location.start.cfi) * total;
+            setCurrentPage(Math.ceil(currentPage));
+        }
+    };
+    
 
     return (
         <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: settings.backgroundColor }}>
@@ -207,22 +218,24 @@ const EBookReader = () => {
             </Drawer>
 
             {/* Table of Contents Drawer */}
-            <Drawer anchor="right" open={tocDrawerOpen} onClose={() => setTocDrawerOpen(false)}>
-                <Box sx={{ width: 250, p: 2 }}>
-                    <Typography variant="h6">Table of Contents</Typography>
-                    {toc.length > 0 ? (
-                        <ul>
-                            {toc.map((item, index) => (
-                                <li key={index}>
-                                    <Button onClick={() => rendition.display(item.href)}>{item.label}</Button>
-                                </li>
-                            ))}
-                        </ul>
-                    ) : (
-                        <Typography>No Table of Contents Available</Typography>
-                    )}
-                </Box>
-            </Drawer>
+            {/* Table of Contents Drawer */}
+<Drawer anchor="right" open={tocDrawerOpen} onClose={() => setTocDrawerOpen(false)}>
+    <Box sx={{ width: 250, p: 2 }}>
+        <Typography variant="h6">Table of Contents</Typography>
+        {toc.length > 0 ? (
+            <ul>
+                {toc.map((item, index) => (
+                    <li key={index}>
+                        <Button onClick={() => handleToCClick(item.href)}>{item.label}</Button>
+                    </li>
+                ))}
+            </ul>
+        ) : (
+            <Typography>No Table of Contents Available</Typography>
+        )}
+    </Box>
+</Drawer>
+
 
             {/* Button to open Table of Contents Drawer */}
             <IconButton
