@@ -78,7 +78,12 @@ const EBookReader = () => {
             });
 
             // Ensure new chapters start on a new page
-            
+            rendition.on('rendered', () => {
+                const chapters = book.spine.get();
+                chapters.forEach((chapter) => {
+                    chapter.element.style.pageBreakBefore = 'always';
+                });
+            });
         }
     }, [book]);
 
