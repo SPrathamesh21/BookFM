@@ -305,33 +305,42 @@ const EpubReader = () => {
         </div>
       )}
 
-      {showFlashCards && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-white overflow-auto p-4 shadow-lg">
-          <h2 className="text-xl font-bold mb-4">Flash Cards</h2>
-          <ul>
-            {Array.from(notes.entries()).map(([cfiRange, note]) => (
-              <li key={cfiRange} className="flex items-center space-x-4 mb-2">
-                <FaStickyNote className="text-yellow-500" />
-                <div
-                  className="cursor-pointer underline"
-                  onClick={() => {
-                    setLocation(cfiRange); 
-                    setShowFlashCards(false);
-                  }}
-                >
-                  {note}
-                </div>
-              </li>
-            ))}
-          </ul>
-          <button 
-            onClick={() => setShowFlashCards(false)} 
-            className="px-4 py-2 bg-blue-500 text-white rounded mt-4 self-center"
+{showFlashCards && (
+  <div className={`fixed inset-y-0 right-0 z-50 w-80 bg-white overflow-auto p-4 shadow-lg transform transition-transform duration-300 ease-in-out ${showFlashCards ? 'translate-x-0' : 'translate-x-full'}`}>
+    <div className="flex justify-between items-center mb-4">
+      <h2 className="text-xl font-bold">Flash Cards</h2>
+      <button 
+        onClick={() => setShowFlashCards(false)} 
+        className="text-gray-500 hover:text-gray-700 focus:outline-none"
+      >
+        <FaTimes />
+      </button>
+    </div>
+    <ul>
+      {Array.from(notes.entries()).map(([cfiRange, note]) => (
+        <li key={cfiRange} className="flex items-center space-x-4 mb-2">
+          <FaStickyNote className="text-yellow-500" />
+          <div
+            className="cursor-pointer underline"
+            onClick={() => {
+              setLocation(cfiRange); 
+              setShowFlashCards(false);
+            }}
           >
-            Close Flash Cards
-          </button>
-        </div>
-      )}
+            {note}
+          </div>
+        </li>
+      ))}
+    </ul>
+    <button 
+      onClick={() => setShowFlashCards(false)} 
+      className="px-4 py-2 bg-blue-500 text-white rounded mt-4 self-center"
+    >
+      Close Flash Cards
+    </button>
+  </div>
+)}
+
     </div>
   );
 };
