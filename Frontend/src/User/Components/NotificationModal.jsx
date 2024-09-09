@@ -123,8 +123,8 @@ function NotificationModal({ isOpen, onClose, notifications, setNotifications, l
               >
                 <FaTimes className="text-2xl text-red-500" />
               </button>
-              <h2 className="text-xl font-bold mb-4">Title:{selectedMessage.title}</h2>
-              <p className="text-gray-700 mb-4 break-words">Description:{selectedMessage.description}</p>
+              <h2 className="text-xl font-bold mb-4">Title: {selectedMessage.title}</h2>
+              <p className="text-gray-700 mb-4 break-words">Description: {selectedMessage.description}</p>
               <div className="grid grid-cols-2 gap-3"> {/* Two-column layout */}
                 {selectedMessage.files && selectedMessage.files.map((file, index) => {
                   const fileType = file.split(';')[0].split(':')[1];

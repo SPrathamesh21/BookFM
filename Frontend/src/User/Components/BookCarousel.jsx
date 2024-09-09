@@ -128,14 +128,14 @@ const BookCarousel = ({ books, title }) => {
       {books.map((book) => (
         <div
           key={book._id}
-          className="flex-shrink-0 w-48 relative"
+          className="flex-shrink-0 w-60 relative"
           onClick={() => handleBookClick(book._id)}
         >
           <div className="relative bg-gray-700 shadow-lg rounded-lg overflow-hidden transform transition-transform hover:scale-95 hover:shadow-2xl cursor-pointer flex flex-col justify-between">
             <img
               src={book.coverImages[0]}
               alt={book.bookName}
-              className="w-full h-60 object-cover"
+              className="w-full h-60 object-cover" loading="lazy"
             />
             <div className="p-4">
               <h3 className="text-xl font-semibold text-teal-400">

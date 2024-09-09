@@ -329,6 +329,7 @@ function AddBook() {
           name="recommendedByCabin"
           value={bookData.recommendedByCabin}
           onChange={handleChange}
+            required
           className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
         >
           <option value="No">No</option>

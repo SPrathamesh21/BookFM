@@ -8,6 +8,7 @@ const bookSchema = new mongoose.Schema({
   dateAdded: { type: String, required: true },
   recommendedByCabin:{type: String, required:true},
   coverImages: [String], // Array of Base64-encoded image strings
+  recommendedByCabin:{type:String,required: true},
   EPUBbase64: {
     id: { type: mongoose.Schema.Types.ObjectId, ref: 'epubs', required: true }, 
     filename: { type: String, required: true } 

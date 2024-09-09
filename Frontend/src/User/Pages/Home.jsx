@@ -1,9 +1,11 @@
-import React, { useEffect, useState, useContext, useMemo } from 'react';
+import React, { useEffect, useState, useContext, useMemo, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../../../axiosConfig';
-import BookCarousel from '../Components/BookCarousel';
-import '../../Style/BookCarousel.css';
 import { AuthContext } from '../../Context/authContext';
+import { useInView } from 'react-intersection-observer';
+
+// Lazy load BookCarousel
+const BookCarousel = lazy(() => import('../Components/BookCarousel'));
 
 function Home() {
   const [books, setBooks] = useState([]);
@@ -15,20 +17,87 @@ function Home() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { currentUser } = useContext(AuthContext);
+  const { ref, inView } = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+  });
 
   // Function to randomly select a category with at least 5 books
   const getRandomCategory = (categoriesWithCount, excludeCategory = null) => {
     const validCategories = Object.keys(categoriesWithCount).filter(
       (cat) => categoriesWithCount[cat] >= 5 && cat !== excludeCategory
-    ); 
+    );
     return validCategories[Math.floor(Math.random() * validCategories.length)];
   };
 
-  // Combined data fetching
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Fetch all necessary data
+  const processBooksData = (booksData, userLibraryData, favoritesData) => {
+    // Sort books
+    const sortedBooks = booksData.sort((a, b) => b.count - a.count);
+    setBooks(booksData);
+    setSortBooks(sortedBooks);
+
+    // Categorize books
+    const categoryCounts = booksData.reduce((acc, book) => {
+      const categories = Array.isArray(book.category) ? book.category : [book.category];
+      categories.forEach((cat) => {
+        if (cat) acc[cat] = (acc[cat] || 0) + 1;
+      });
+      return acc;
+    }, {});
+
+    setCategories(Object.keys(categoryCounts));
+
+    // Random categories for 3D and 4D carousels
+    const category3D = getRandomCategory(categoryCounts);
+    const category4D = getRandomCategory(categoryCounts, category3D);
+
+    setCarouselCategories({ category3D, category4D });
+
+    // User Library and Favorites
+    setUserLibrary(userLibraryData);
+
+    const filteredFavoriteBooks = favoritesData.filter(book =>
+      userLibraryData.some(libBook => libBook._id === book._id)
+    );
+
+    const categoryCountsFavorites = {};
+    filteredFavoriteBooks.forEach(book => {
+      book.category.forEach(cat => {
+        categoryCountsFavorites[cat] = (categoryCountsFavorites[cat] || 0) + 1;
+      });
+    });
+
+    const filteredBooksByCategory = filteredFavoriteBooks.filter(book =>
+      book.category.some(cat => categoryCountsFavorites[cat] >= 5)
+    );
+
+    const categoriesInFavorites = new Set(
+      filteredBooksByCategory.flatMap(book => book.category)
+    );
+
+    if (categoriesInFavorites.size >= 2) {
+      setFavoriteBooks(filteredBooksByCategory);
+    } else {
+      setFavoriteBooks([]);
+    }
+  };
+
+  const fetchBooks = async () => {
+    try {
+      // Check local storage for cached data
+      const cachedBooks = localStorage.getItem('books');
+      const cachedUserLibrary = localStorage.getItem('userLibrary');
+      const cachedFavorites = localStorage.getItem('favorites');
+
+      if (cachedBooks && cachedUserLibrary && cachedFavorites) {
+        // Use cached data if available
+        const booksData = JSON.parse(cachedBooks);
+        const userLibraryData = JSON.parse(cachedUserLibrary);
+        const favoritesData = JSON.parse(cachedFavorites);
+
+        processBooksData(booksData, userLibraryData, favoritesData);
+      } else {
+        // Fetch new data
         const [booksResponse, userLibraryResponse, favoritesResponse] = await Promise.all([
           axios.get('/get-books'),
           currentUser ? axios.get(`/get-user-library/${currentUser.userId}`) : Promise.resolve({ data: [] }),
@@ -37,69 +106,83 @@ function Home() {
 
         const booksData = booksResponse.data;
         const userLibraryData = userLibraryResponse.data;
-        const favoriteBooksData = favoritesResponse.data.favorites;
+        const favoritesData = favoritesResponse.data.favorites;
 
-        // Update state
-        setBooks(booksData);
-        setUserLibrary(userLibraryData);
+        // Cache the fetched data
+        localStorage.setItem('books', JSON.stringify(booksData));
+        localStorage.setItem('userLibrary', JSON.stringify(userLibraryData));
+        localStorage.setItem('favorites', JSON.stringify(favoritesData));
 
-        // Sorting books
-        const sortedBooks = booksData.sort((a, b) => b.count - a.count);
-        setSortBooks(sortedBooks);
+        processBooksData(booksData, userLibraryData, favoritesData);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        // Category counting
-        const categoryCounts = booksData.reduce((acc, book) => {
-          const categories = Array.isArray(book.category) ? book.category : [book.category];
-          categories.forEach((cat) => {
-            if (cat) acc[cat] = (acc[cat] || 0) + 1;
+  useEffect(() => {
+    fetchBooks();
+  }, [currentUser?.userId]);
+
+  useEffect(() => {
+    const fetchUserLibrary = async () => {
+      if (currentUser && currentUser.userId) {
+        try {
+          // Fetch user library, favorites, and all books
+          const [libraryResponse, favoritesResponse, booksResponse] = await Promise.all([
+            axios.get(`/get-user-library/${currentUser.userId}`),
+            axios.get(`/get-favorites/${currentUser.userId}`),
+            axios.get(`/get-books`)
+          ]);
+
+          const libraryBooks = libraryResponse.data;
+          const favoriteBooksData = favoritesResponse.data.favorites;
+          const allBooks = booksResponse.data;
+
+          setUserLibrary(libraryBooks);
+
+          // Count books in each category from the books model
+          const categoryCounts = {};
+          allBooks.forEach(book => {
+            const categories = Array.isArray(book.category) ? book.category : [book.category];
+            categories.forEach(cat => {
+              categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+            });
           });
-          return acc;
-        }, {});
 
-        const uniqueCategories = Object.keys(categoryCounts);
-        setCategories(uniqueCategories);
+          // Filter favorite books that are in the user library
+          const filteredFavoriteBooks = favoriteBooksData.filter(book =>
+            libraryBooks.some(libBook => libBook._id === book._id)
+          );
 
-        // Random category selection
-        const category3D = getRandomCategory(categoryCounts);
-        const category4D = getRandomCategory(categoryCounts, category3D);
-        setCarouselCategories({ category3D, category4D });
-
-        // Filtering favorite books
-        const filteredFavoriteBooks = favoriteBooksData.filter(book =>
-          userLibraryData.some(libBook => libBook._id === book._id)
-        );
-
-        // Group by category and filter
-        const categoryCountsFavorites = filteredFavoriteBooks.reduce((acc, book) => {
-          book.category.forEach(cat => {
-            acc[cat] = (acc[cat] || 0) + 1;
+          // Only include books from categories with at least 5 books in the books model
+          const filteredBooksByCategory = filteredFavoriteBooks.filter(book => {
+            const categories = Array.isArray(book.category) ? book.category : [book.category];
+            return categories.some(cat => categoryCounts[cat] >= 5);
           });
-          return acc;
-        }, {});
 
-        const filteredBooksByCategory = filteredFavoriteBooks.filter(book =>
-          book.category.some(cat => categoryCountsFavorites[cat] >= 5)
-        );
+          // Ensure there are at least 2 different categories
+          const categoriesInFavorites = new Set(
+            filteredBooksByCategory.flatMap(book => {
+              const categories = Array.isArray(book.category) ? book.category : [book.category];
+              return categories;
+            })
+          );
 
-        // Ensure at least 2 different categories
-        const categoriesInFavorites = new Set(
-          filteredBooksByCategory.flatMap(book => book.category)
-        );
+          if (categoriesInFavorites.size >= 2) {
+            setFavoriteBooks(filteredBooksByCategory);
+          } else {
+            setFavoriteBooks([]);
+          }
 
-        if (categoriesInFavorites.size >= 2) {
-          setFavoriteBooks(filteredBooksByCategory);
-        } else {
-          setFavoriteBooks([]);
+        } catch (error) {
+          console.error('Error fetching user library or favorites:', error);
         }
-
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      } finally {
-        setLoading(false);
       }
     };
-
-    fetchData();
+    fetchUserLibrary();
   }, [currentUser]);
 
   const handleCategoryClick = (category) => {
@@ -111,9 +194,7 @@ function Home() {
   }, [books]);
 
   if (loading) {
-    return <div className="flex justify-center items-center text-center bg-gray-800 text-gray-100 min-h-screen">
-      Loading...
-    </div>;
+    return <div className="text-center text-gray-100">Loading...</div>;
   }
 
   return (
@@ -146,39 +227,48 @@ function Home() {
         </section>
 
         {/* User's Library Carousel */}
-        <BookCarousel books={userLibrary} title="Your Library" />
+        <div ref={ref}>
+          {inView && (
+            <Suspense fallback={<div>Loading carousel...</div>}>
+              <BookCarousel books={userLibrary} title="Your Library" />
+            </Suspense>
+          )}
+        </div>
 
+        {/* Favorites Carousel */}
         {favoriteBooks.length > 0 && (
-          <BookCarousel books={favoriteBooks} title="Your Favorite Shelves" />
+          <Suspense fallback={<div>Loading favorites...</div>}>
+            <BookCarousel books={favoriteBooks} title="Your Favorites" />
+          </Suspense>
         )}
 
         {/* 3D Books Carousel */}
         {carouselCategories.category3D && (
-          <BookCarousel
-            books={books.filter(book =>
-              book.category.includes(carouselCategories.category3D)
-            )}
-            title={`${carouselCategories.category3D} Books`}
-          />
+          <Suspense fallback={<div>Loading 3D books...</div>}>
+            <BookCarousel books={books.filter(book => book.category.includes(carouselCategories.category3D))} title={`3D Books (${carouselCategories.category3D})`} />
+          </Suspense>
         )}
 
         {/* 4D Books Carousel */}
         {carouselCategories.category4D && (
-          <BookCarousel
-            books={books.filter(book =>
-              book.category.includes(carouselCategories.category4D)
-            )}
-            title={`${carouselCategories.category4D} Books`}
-          />
+            <Suspense fallback={<div>Loading 4D books...</div>}>
+            <BookCarousel books={books.filter(book => book.category.includes(carouselCategories.category4D))} title={`4D Books (${carouselCategories.category4D})`} />
+          </Suspense>
         )}
 
-        <BookCarousel books={sortBooks} title="Best Seller" />
+        {/* Best Sellers */}
+        {books.length > 0 && (
+          <Suspense fallback={<div>Loading best sellers...</div>}>
+            <BookCarousel books={sortBooks.slice(0, 10)} title="Best Sellers" />
+          </Suspense>
+        )}
 
-        {/* Recommended By Cabin Carousel */}
-        <BookCarousel
-          books={recommendedBooks}
-          title="Recommended By Cabin"
-        />
+        {/* Recommended By Cabin */}
+        {recommendedBooks.length > 0 && (
+          <Suspense fallback={<div>Loading recommendations...</div>}>
+            <BookCarousel books={recommendedBooks} title="Recommended By Cabin" />
+          </Suspense>
+        )}
       </main>
     </div>
   );

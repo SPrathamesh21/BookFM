@@ -18,6 +18,10 @@ import PdfViewerComponent from './User/Components/PdfViewerComponent';
 import DocumentViewer from './User/Components/DocumentViewer';
 import EPUB from './User/Components/EpubViewerComponent';
 import EBookReader from './User/Components/EpubViewerComponent';
+import YourLibrary from './User/Pages/YourLibrary';
+import EpubReader from './User/Pages/Example';
+import Flipbook from './User/Components/FlipBook';
+
 
 function App() { 
   const [isMobile, setIsMobile] = useState(false); 
@@ -27,13 +31,10 @@ function App() {
       setIsMobile(e.matches);
     };
 
-    // Set the initial state
     setIsMobile(mediaQuery.matches);
 
-    // Add the listener
     mediaQuery.addEventListener('change', handleMediaQueryChange);
 
-    // Clean up the listener on component unmount
     return () => {
       mediaQuery.removeEventListener('change', handleMediaQueryChange);
     };
@@ -52,11 +53,16 @@ function App() {
         <Route path='/signup' element={<Signup />} />
         <Route path='/login' element={<Login />} />
         <Route path='/header' element={<Header />} />
+        <Route path='/yourlibrary' element={<YourLibrary />} />
         <Route path='/inner' element={<EBookReader />} />
-        <Route path="/book/:bookId" element={<ExpandedView />} /> {/* New route */}
+        <Route path='/epub' element={<EPUB />} />
+        <Route path='/example' element={<EpubReader />} />
+        <Route path="/book/:bookId" element={<ExpandedView />} /> 
         <Route path="/admin_panel/*" element={<DefaultAdminPage />} />
-        <Route path="/404" element={<NotFound />} /> {/* Explicitly define the 404 route */}
-        <Route path="*" element={<Navigate to="/404" replace />} /> {/* Catch-all route for undefined paths */}
+        <Route path="/pdf" element={<PdfViewerComponent />} />
+        <Route path="/flipbook" element={<Flipbook />} />
+        <Route path="/404" element={<NotFound />} /> 
+        <Route path="*" element={<Navigate to="/404" replace />} /> 
 
       </Routes>
         <ToastContainer />

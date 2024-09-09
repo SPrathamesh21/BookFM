@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Drawer, Button, Typography, Box, AppBar, Toolbar, IconButton, Slider } from '@mui/material';
+import { Drawer, Button, Typography, Box, AppBar, Toolbar, IconButton, Slider, TextField } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import TableChartIcon from '@mui/icons-material/TableChart'; // Import Table of Contents icon
+import TableChartIcon from '@mui/icons-material/TableChart'; 
 import ePub from 'epubjs';
 
 const EBookReader = () => {
@@ -15,7 +15,9 @@ const EBookReader = () => {
     const [settingsDrawerOpen, setSettingsDrawerOpen] = useState(false);
     const [tocDrawerOpen, setTocDrawerOpen] = useState(false);
     const [toc, setToc] = useState([]);
-
+    const [searchTerm, setSearchTerm] = useState('');
+    const [searchResults, setSearchResults] = useState([]);
+    const [currentResultIndex, setCurrentResultIndex] = useState(0);
     const containerRef = useRef(null);
 
     const modes = {
@@ -32,7 +34,6 @@ const EBookReader = () => {
         columnCount: 1
     });
 
-    // Handle EPUB file upload
     const handleFileUpload = (event) => {
         const file = event.target.files[0];
         if (file) {
@@ -45,7 +46,6 @@ const EBookReader = () => {
         }
     };
 
-    // EPUB book rendition setup
     useEffect(() => {
         if (book && containerRef.current) {
             const rendition = book.renderTo(containerRef.current, {
@@ -53,40 +53,35 @@ const EBookReader = () => {
                 height: '100%',
                 flow: 'paginated',
             });
-    
+
             rendition.display().then(async () => {
                 setRendition(rendition);
-    
-                // Check if locations are already cached
+
                 const cachedLocations = localStorage.getItem('bookLocations');
                 if (cachedLocations) {
                     rendition.book.locations.load(cachedLocations);
                 } else {
-                    await rendition.book.locations.generate();
-                    const total = rendition.book.locations.total;
-                    setTotalPages(total);
+                    await rendition.book.locations.generate(1000);
+                    setTotalPages(rendition.book.locations.total);
                     localStorage.setItem('bookLocations', rendition.book.locations.save());
                 }
-    
+
                 const location = rendition.currentLocation();
-                setCurrentPage(rendition.book.locations.percentageFromCfi(location.start.cfi) * rendition.book.locations.total);
+                setCurrentPage(rendition.book.locations.locationFromCfi(location.start.cfi).start);
             });
-    
+
             rendition.on('relocated', (location) => {
-                const total = rendition.book.locations.total;
-                const currentPage = rendition.book.locations.percentageFromCfi(location.start.cfi) * total;
-                setCurrentPage(Math.ceil(currentPage));
-                setProgress((currentPage / total) * 100);
+                const currentPage = rendition.book.locations.locationFromCfi(location.start.cfi).start;
+                setCurrentPage(currentPage);
+                setProgress((currentPage / rendition.book.locations.total) * 100);
             });
-    
+
             book.loaded.navigation.then(nav => {
                 setToc(nav.toc);
             });
         }
     }, [book]);
-    
 
-    // Apply settings like background color, font, etc.
     useEffect(() => {
         if (rendition) {
             rendition.themes.override('background-color', settings.backgroundColor);
@@ -105,7 +100,6 @@ const EBookReader = () => {
         if (rendition) rendition.prev();
     };
 
-    // Handle settings changes
     const handleSettingsChange = (key, value) => {
         setSettings((prev) => ({
             ...prev,
@@ -126,14 +120,47 @@ const EBookReader = () => {
     const handleToCClick = async (href) => {
         if (rendition) {
             await rendition.display(href);
-            // Optionally, handle page calculation or scroll to ensure the correct page.
             const location = rendition.currentLocation();
-            const total = rendition.book.locations.total;
-            const currentPage = rendition.book.locations.percentageFromCfi(location.start.cfi) * total;
-            setCurrentPage(Math.ceil(currentPage));
+            const currentPage = rendition.book.locations.locationFromCfi(location.start.cfi).start;
+            setCurrentPage(currentPage);
         }
     };
-    
+
+    const handleSearch = async () => {
+        if (rendition && searchTerm) {
+            try {
+                const results = await book.search(searchTerm);
+
+                if (results.length > 0) {
+                    setSearchResults(results);
+                    setCurrentResultIndex(0);
+                    await rendition.display(results[0].cfi); // Jump to first result
+                    alert(`Found ${results.length} results for "${searchTerm}".`);
+                } else {
+                    alert('Search term not found in the book.');
+                }
+            } catch (error) {
+                console.error("Error during search:", error);
+                alert("Search failed.");
+            }
+        }
+    };
+
+    const handleNextResult = async () => {
+        if (searchResults.length > 0) {
+            const nextIndex = (currentResultIndex + 1) % searchResults.length;
+            setCurrentResultIndex(nextIndex);
+            await rendition.display(searchResults[nextIndex].cfi);
+        }
+    };
+
+    const handlePrevResult = async () => {
+        if (searchResults.length > 0) {
+            const prevIndex = (currentResultIndex - 1 + searchResults.length) % searchResults.length;
+            setCurrentResultIndex(prevIndex);
+            await rendition.display(searchResults[prevIndex].cfi);
+        }
+    };
 
     return (
         <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: settings.backgroundColor }}>
@@ -145,11 +172,37 @@ const EBookReader = () => {
                     <Typography variant="h6" sx={{ flexGrow: 1 }}>
                         E-Book Reader
                     </Typography>
+                    <IconButton color="inherit" onClick={() => setTocDrawerOpen(true)}>
+                        <TableChartIcon />
+                    </IconButton>
                 </Toolbar>
             </AppBar>
 
             <Box sx={{ p: 2 }}>
                 <input type="file" accept=".epub" onChange={handleFileUpload} />
+            </Box>
+
+            <Box sx={{ p: 2, display: 'flex', justifyContent: 'center' }}>
+                <TextField
+                    label="Search"
+                    variant="outlined"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    sx={{ width: '300px' }}
+                />
+                <Button variant="contained" onClick={handleSearch} sx={{ ml: 2 }}>
+                    Search
+                </Button>
+            </Box>
+
+            <Box sx={{ p: 2, display: searchResults.length > 0 ? 'flex' : 'none', justifyContent: 'center', alignItems: 'center' }}>
+                <Button variant="contained" onClick={handlePrevResult} sx={{ mr: 2 }}>
+                    Previous
+                </Button>
+                <Typography>{`${currentResultIndex + 1} of ${searchResults.length}`}</Typography>
+                <Button variant="contained" onClick={handleNextResult} sx={{ ml: 2 }}>
+                    Next
+                </Button>
             </Box>
 
             <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
@@ -171,79 +224,54 @@ const EBookReader = () => {
                     <Box sx={{ position: 'fixed', bottom: 0, width: '100%', p: 2, backgroundColor: '#f0f0f0' }}>
                         <Slider
                             value={progress}
-                            onChange={(e, newValue) => rendition.display(Math.floor(newValue * totalPages / 100))}
-                            aria-labelledby="progress-bar"
+                            onChange={(e, value) => {
+                                const targetPage = (value / 100) * totalPages;
+                                const cfi = rendition.book.locations.cfiFromPercentage(targetPage / totalPages);
+                                rendition.display(cfi);
+                                setProgress(value);
+                            }}
                         />
                     </Box>
                 </>
             )}
 
-            {/* Settings Drawer */}
-            <Drawer anchor="right" open={settingsDrawerOpen} onClose={() => setSettingsDrawerOpen(false)}>
+            <Drawer anchor="left" open={settingsDrawerOpen} onClose={() => setSettingsDrawerOpen(false)}>
                 <Box sx={{ width: 250, p: 2 }}>
                     <Typography variant="h6">Settings</Typography>
-
-                    <Typography>Mode</Typography>
-                    <Button onClick={() => handleModeChange('white')}>White</Button>
-                    <Button onClick={() => handleModeChange('sepia')}>Sepia</Button>
-                    <Button onClick={() => handleModeChange('night')}>Night Mode</Button>
-
-                    <Typography>Font Family</Typography>
-                    <select
-                        value={settings.fontFamily}
-                        onChange={(e) => handleSettingsChange('fontFamily', e.target.value)}
-                    >
-                        <option value="serif">Serif</option>
-                        <option value="sans-serif">Sans-serif</option>
-                        <option value="monospace">Monospace</option>
-                    </select>
-                    <Typography>Font Size</Typography>
-                    <input
-                        type="range"
-                        min="12"
-                        max="24"
-                        value={parseInt(settings.fontSize)}
-                        onChange={(e) => handleSettingsChange('fontSize', `${e.target.value}px`)}
+                    <Typography variant="subtitle1">Font Size</Typography>
+                    <Slider
+                        value={parseInt(settings.fontSize, 10)}
+                        onChange={(e, value) => handleSettingsChange('fontSize', `${value}px`)}
+                        min={12}
+                        max={36}
                     />
-                    <Typography>Column Count</Typography>
-                    <select
+                    <Typography variant="subtitle1">Columns</Typography>
+                    <Slider
                         value={settings.columnCount}
-                        onChange={(e) => handleSettingsChange('columnCount', e.target.value)}
-                    >
-                        <option value="1">1 Column</option>
-                        <option value="2">2 Columns</option>
-                        <option value="3">3 Columns</option>
-                    </select>
+                        onChange={(e, value) => handleSettingsChange('columnCount', value)}
+                        min={1}
+                        max={3}
+                    />
+                    <Button onClick={() => handleModeChange('white')}>Light Mode</Button>
+                    <Button onClick={() => handleModeChange('sepia')}>Sepia Mode</Button>
+                    <Button onClick={() => handleModeChange('night')}>Night Mode</Button>
                 </Box>
             </Drawer>
 
-            {/* Table of Contents Drawer */}
-            {/* Table of Contents Drawer */}
-<Drawer anchor="right" open={tocDrawerOpen} onClose={() => setTocDrawerOpen(false)}>
-    <Box sx={{ width: 250, p: 2 }}>
-        <Typography variant="h6">Table of Contents</Typography>
-        {toc.length > 0 ? (
-            <ul>
-                {toc.map((item, index) => (
-                    <li key={index}>
-                        <Button onClick={() => handleToCClick(item.href)}>{item.label}</Button>
-                    </li>
-                ))}
-            </ul>
-        ) : (
-            <Typography>No Table of Contents Available</Typography>
-        )}
-    </Box>
-</Drawer>
-
-
-            {/* Button to open Table of Contents Drawer */}
-            <IconButton
-                onClick={() => setTocDrawerOpen(true)}
-                sx={{ position: 'fixed', bottom: 20, right: 20, backgroundColor: '#fff' }}
-            >
-                <TableChartIcon />
-            </IconButton>
+            <Drawer anchor="right" open={tocDrawerOpen} onClose={() => setTocDrawerOpen(false)}>
+                <Box sx={{ width: 250, p: 2 }}>
+                    <Typography variant="h6">Table of Contents</Typography>
+                    <ul>
+                        {toc.map((chapter) => (
+                            <li key={chapter.id}>
+                                <Button onClick={() => handleToCClick(chapter.href)}>
+                                    {chapter.label}
+                                </Button>
+                            </li>
+                        ))}
+                    </ul>
+                </Box>
+            </Drawer>
         </Box>
     );
 };

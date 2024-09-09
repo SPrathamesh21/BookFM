@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
-import pdfFile from '../../assets/Book6(271pg).pdf';
+import pdfFile from '../../assets/book2.pdf';
 
 // Set the worker source for pdfjs
 pdfjs.GlobalWorkerOptions.workerSrc = '/src/assets/pdf.worker.min.mjs';

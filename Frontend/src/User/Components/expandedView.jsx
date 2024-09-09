@@ -75,25 +75,25 @@ const ExpandedView = () => {
       alert('Failed to add book to library.');
     }
   };
+
   useEffect(() => {
-    if (currentUser){
-    const fetchFavorites = async () => {
-      try {
-        const response = await axios.get(`/get-favorites/${currentUser.userId}`);
-        console.log('favorites', response.data.favorites)
-        const favoriteBooks = response.data.favorites.reduce((acc, book) => {
-          acc[book._id] = true;
-          return acc;
-        }, {});
-        setActiveHearts(favoriteBooks);
-        console.log(activeHearts)
-      } catch (error) {
-        console.error('Error fetching favorite books:', error);
-      }
-    };
-    fetchFavorites();
-  }
+    if (currentUser) {
+      const fetchFavorites = async () => {
+        try {
+          const response = await axios.get(`/get-favorites/${currentUser.userId}`);
+          const favoriteBooks = response.data.favorites.reduce((acc, book) => {
+            acc[book._id] = true;
+            return acc;
+          }, {});
+          setActiveHearts(favoriteBooks);
+        } catch (error) {
+          console.error('Error fetching favorite books:', error);
+        }
+      };
+      fetchFavorites();
+    }
   }, [currentUser]);
+
   const toggleHeart = async (bookId) => {
     try {
       const isFavorite = !activeHearts[bookId];
@@ -101,14 +101,13 @@ const ExpandedView = () => {
         ...prevState,
         [bookId]: isFavorite,
       }));
-  
+
       const response = isFavorite 
         ? await axios.post('/add-favorite', { userId: currentUser.userId, bookId })
         : await axios.post('/remove-favorite', { userId: currentUser.userId, bookId });
-  
+
       if (!response.data.success && response.data.message.includes('log in')) {
         alert('Please log in again to manage your favorites.');
-        // Optionally, redirect to the login page
         navigate('/login');
       }
     } catch (error) {
@@ -116,7 +115,9 @@ const ExpandedView = () => {
     }
   };
 
-  if (!book) return <div className="text-center text-gray-700">Loading...</div>;
+  if (!book) return <div className="flex justify-center items-center text-center bg-gray-800 text-gray-100 min-h-screen">
+    Loading...
+  </div>;
 
   return (
     <div className="relative flex flex-col md:flex-row p-6 md:p-8 rounded-xl bg-gradient-to-r from-gray-100 to-white max-w-4xl mx-auto my-5 shadow-lg transform transition-transform ease-linear cursor-pointer overflow-hidden">
@@ -178,6 +179,7 @@ const ExpandedView = () => {
           <p className="text-base md:text-lg text-gray-600 mb-5">Usual time to read: 5 hours</p>
           <button 
             className={`mt-4 md:mt-5 py-2 px-4 bg-blue-500 text-white rounded-lg font-bold text-lg flex items-center justify-center transition-transform duration-300 ${isReadHover ? 'bg-blue-700 transform scale-105' : ''} w-full md:w-auto`}
+            onClick={addToLibrary}
             onMouseEnter={() => setIsReadHover(true)}
             onMouseLeave={() => setIsReadHover(false)}
           >

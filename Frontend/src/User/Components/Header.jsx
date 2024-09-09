@@ -1,4 +1,4 @@
-import React, { useState, useEffect,useContext, useMemo, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useContext, useMemo, Suspense, lazy } from 'react';
 import { Link } from 'react-router-dom';
 import { FaBell } from 'react-icons/fa';
 import SearchBar from './SearchBar';
@@ -23,38 +23,38 @@ function Header() {
   const [error, setError] = useState(null);
   const { isLoggedIn, currentUser, logout } = useContext(AuthContext);
 
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get('/notifications');
-        const fetchedMessages = response.data.notifications;
-        const unreadCount = response.data.unreadCount;
+  const fetchNotifications = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get('/notifications');
+      const fetchedMessages = response.data.notifications;
+      const unreadCount = response.data.unreadCount;
 
-        if (Array.isArray(fetchedMessages)) {
-          const recentMessages = getRecentMessages(fetchedMessages);
+      if (Array.isArray(fetchedMessages)) {
+        const recentMessages = getRecentMessages(fetchedMessages);
 
-          const unreadMessages = recentMessages
-            .filter((msg) => !msg.read)
-            .sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded));
-          const readMessages = recentMessages
-            .filter((msg) => msg.read)
-            .sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded));
+        const unreadMessages = recentMessages
+          .filter((msg) => !msg.read)
+          .sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded));
+        const readMessages = recentMessages
+          .filter((msg) => msg.read)
+          .sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded));
 
-          setNotifications({ unread: unreadMessages, read: readMessages });
-          setNotificationCount(unreadCount);
-        } else {
-          console.error('Unexpected data format:', fetchedMessages);
-          throw new Error('Data format is incorrect');
-        }
-      } catch (error) {
-        console.error('Error fetching notifications:', error);
-        setError('Failed to load notifications.');
-      } finally {
-        setLoading(false);
+        setNotifications({ unread: unreadMessages, read: readMessages });
+        setNotificationCount(unreadCount);
+      } else {
+        console.error('Unexpected data format:', fetchedMessages);
+        throw new Error('Data format is incorrect');
       }
-    };
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      setError('Failed to load notifications.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchNotifications();
   }, []);
 
@@ -83,9 +83,10 @@ function Header() {
         notifications={notifications}
         loading={loading}
         error={error}
+        setNotifications={setNotifications} // Pass setNotifications as a prop
       />
     </Suspense>
-  ), [isNotificationModalOpen, notifications, loading, error]);
+  ), [isNotificationModalOpen, notifications, loading, error, setNotifications]);
 
   return (
     <header className="bg-gray-900 text-gray-100 w-full p-4 flex items-center justify-between shadow-md">
@@ -118,7 +119,7 @@ function Header() {
         <div className="relative">
           <button
             onClick={handleOpenNotificationModal}
-            className={`relative ${notificationCount }`}
+            className={`relative ${notificationCount}`}
           >
             <FaBell className={`text-teal-400 text-2xl ${notificationCount > 0 ? 'animate-bounce' : ''}`} />
             {notificationCount > 0 && (
@@ -130,6 +131,7 @@ function Header() {
 
           {isNotificationModalOpen && notificationModal}
         </div>
+        
       </div>
 
       {isLogoutModalOpen && (
