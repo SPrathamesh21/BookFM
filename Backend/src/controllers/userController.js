@@ -201,7 +201,7 @@ exports.getEpubFile = async (req, res) => {
     if (!file) {
       return res.status(404).json({ message: 'File not found' });
     }
-    // console.log('file: ',)
+    // console.log('file: ', file)
     // Create a read stream to download the binary data from GridFS
     const readStream = gfsBucket.openDownloadStream(objectId);
 
@@ -212,7 +212,7 @@ exports.getEpubFile = async (req, res) => {
     // Pipe the binary data to the response
     readStream.pipe(res);
     // readStream.on('data', (chunk) => {
-    //   console.log('Chunk received:',);  // Each chunk of the binary file
+    //   console.log('Chunk received:', chunk);  // Each chunk of the binary file
     // });
     
     // Handle streaming errors

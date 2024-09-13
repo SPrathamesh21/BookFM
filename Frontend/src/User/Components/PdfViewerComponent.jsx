@@ -10,8 +10,6 @@ import axios from '../../../axiosConfig';
 // Set the worker source
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
 
-const HIGHLIGHTS_KEY_PREFIX = "pdfHighlights_";
-
 const PdfViewer = ({ file, bookId }) => {
   const [pageNumber, setPageNumber] = useState(1);
   const [numPages, setNumPages] = useState(null);
@@ -31,45 +29,55 @@ const PdfViewer = ({ file, bookId }) => {
   const selectionTimeout = useRef(null);
   const [highlightApplied, setHighlightApplied] = useState(false);
   const [postAnnotations, setPostAnnotations] = useState([])
-  const highlightsKey = `${HIGHLIGHTS_KEY_PREFIX}${file}`;
 
   useEffect(() => {
     const fetchAnnotations = async () => {
       try {
         const response = await axios.get(`/pdf/annotations/${currentUser?.userId}/${bookId}`);
         const data = response.data;
-
+  
         // Transform the data into the required format
         const highlightsData = {};
         const annotationsData = [];
-
+  
         data.annotations.forEach((annotation) => {
           annotation.highlights.forEach((highlight) => {
             if (!highlight.rect) {
-              return; 
+              return;
             }
-            if (!highlightsData[pageNumber]) {
-              highlightsData[pageNumber] = [];
-            }
-            highlightsData[pageNumber].push({
-              rect: {
-                top: highlight.rect.top,
-                left: highlight.rect.left,
-                width: highlight.rect.width,
-                height: highlight.rect.height,
-              },
-              color: highlight.color,
-              text: highlight.text,
+  
+            // Ensure that we're mapping highlights to the correct page number from notes
+            annotation.notes.forEach((note) => {
+              const pageNum = note.pageNumber; // Get the page number from notes
+              if (!highlightsData[pageNum]) {
+                highlightsData[pageNum] = [];
+              }
+  
+              highlightsData[pageNum].push({
+                rect: {
+                  top: highlight.rect.top,
+                  left: highlight.rect.left,
+                  width: highlight.rect.width,
+                  height: highlight.rect.height,
+                },
+                color: highlight.color,
+                text: highlight.text,
+              });
             });
           });
+  
+          // Add notes to annotationsData
           annotationsData.push(...annotation.notes.map((note) => ({
             text: note.text,
             note: note.note,
             pageNumber: note.pageNumber,
-            rect: note.rect 
+            rect: note.rect,
           })));
         });
-
+  
+        console.log('Annotations data:', annotationsData);
+        console.log('Highlights data:', highlightsData);
+  
         setHighlights(highlightsData);
         setAnnotations(annotationsData);
         setFlashcards(annotationsData);
@@ -77,9 +85,10 @@ const PdfViewer = ({ file, bookId }) => {
         console.error('Error fetching annotations:', error);
       }
     };
-
+  
     fetchAnnotations();
   }, [currentUser?.userId, bookId]);
+  
 
 
   useEffect(() => {
@@ -268,7 +277,7 @@ const PdfViewer = ({ file, bookId }) => {
   };
 
   return (
-    <div className={`min-h-screen ${theme === 'dark' ? 'bg-gray-900 text-white' : theme === 'sepia' ? 'bg-[#5b4636] text-black' : 'bg-gray-100 text-black'} transition-colors duration-300`}>
+    <div className={`min-h-screen ${theme === 'dark' ? 'bg-gray-900 text-white' : theme === 'sepia' ? 'bg-[#f4ecd8] text-black' : 'bg-gray-100 text-black'} transition-colors duration-300`}>
 
 <div className="flex flex-row justify-between items-center p-4 bg-white shadow-md rounded-lg w-full mx-auto flex-nowrap">
         {/* Font Size Controls

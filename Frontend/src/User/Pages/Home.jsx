@@ -175,7 +175,7 @@ function Home() {
   }, [books]);
 
   if (loading) {
-    return <div className="text-center text-gray-100">Loading...</div>;
+    return <div className="text-center bg-gray-800 text-gray-100">Loading...</div>;
   }
 
   return (

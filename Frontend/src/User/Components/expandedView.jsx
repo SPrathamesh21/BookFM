@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from '../../../axiosConfig';
 import { FaShareAlt, FaBookOpen } from 'react-icons/fa';
 import { AuthContext } from '../../Context/authContext';
+import { saveFileToIndexedDB, deleteFileFromIndexedDB } from '../../Utils/IndexDBHelper';
 
 const ExpandedView = () => {
   const { bookId } = useParams();
@@ -15,6 +16,7 @@ const ExpandedView = () => {
   const [epubFile, setEpubFile] = useState(null);
   const [fileType, setFileType] = useState(null); 
   const { currentUser } = useContext(AuthContext);
+  
   const blobToBase64 = (blob) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -28,18 +30,28 @@ const ExpandedView = () => {
       try {
         const response = await axios.get(`/get-book/${bookId}`);
         setBook(response.data);
+
         if (response.data.EPUBbase64.id) {
           const fileId = response.data.EPUBbase64.id;
           const fileResponse = await axios.get(`/file/${fileId}`, { responseType: 'blob' });
-          
+
           const filename = response.data.EPUBbase64.filename;
           const fileExtension = filename.split('.').pop(); // Extract the file extension
           const fileType = fileExtension === 'epub' ? 'epub' : fileExtension === 'pdf' ? 'pdf' : 'unknown'; // Set file type based on extension
-  
+
           const blob = fileResponse.data;
+
+          // Convert blob to base64 for easier storage if necessary
           const base64 = await blobToBase64(blob);
-          localStorage.setItem('epubFileData', base64);
-          localStorage.setItem('fileType', fileType);
+
+          // Remove existing files in IndexedDB (if necessary)
+          await deleteFileFromIndexedDB('epubFileData');
+          await deleteFileFromIndexedDB('fileType');
+
+          // Store the file data and type in IndexedDB
+          await saveFileToIndexedDB('epubFileData', base64);
+          await saveFileToIndexedDB('fileType', fileType);
+
           setEpubFile(URL.createObjectURL(blob));
           setFileType(fileType); // Set the dynamic file type
         }
@@ -47,11 +59,11 @@ const ExpandedView = () => {
         console.error('Error fetching book details:', error);
       }
     };
-  
+
     fetchBookDetails();
   }, [bookId]);
   
-
+  
   useEffect(() => {
     if (book && book.coverImages.length > 1) {
       const interval = setInterval(() => {
