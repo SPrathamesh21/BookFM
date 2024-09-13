@@ -84,19 +84,6 @@ function Home() {
 
   const fetchBooks = async () => {
     try {
-      // Check local storage for cached data
-      const cachedBooks = localStorage.getItem('books');
-      const cachedUserLibrary = localStorage.getItem('userLibrary');
-      const cachedFavorites = localStorage.getItem('favorites');
-
-      if (cachedBooks && cachedUserLibrary && cachedFavorites) {
-        // Use cached data if available
-        const booksData = JSON.parse(cachedBooks);
-        const userLibraryData = JSON.parse(cachedUserLibrary);
-        const favoritesData = JSON.parse(cachedFavorites);
-
-        processBooksData(booksData, userLibraryData, favoritesData);
-      } else {
         // Fetch new data
         const [booksResponse, userLibraryResponse, favoritesResponse] = await Promise.all([
           axios.get('/get-books'),
@@ -108,13 +95,7 @@ function Home() {
         const userLibraryData = userLibraryResponse.data;
         const favoritesData = favoritesResponse.data.favorites;
 
-        // Cache the fetched data
-        localStorage.setItem('books', JSON.stringify(booksData));
-        localStorage.setItem('userLibrary', JSON.stringify(userLibraryData));
-        localStorage.setItem('favorites', JSON.stringify(favoritesData));
-
         processBooksData(booksData, userLibraryData, favoritesData);
-      }
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
