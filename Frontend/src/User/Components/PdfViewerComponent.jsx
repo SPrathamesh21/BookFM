@@ -3,7 +3,7 @@ import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/esm/Page/AnnotationLayer.css";
 import "react-pdf/dist/esm/Page/TextLayer.css";
 import 'pdfjs-dist/web/pdf_viewer.css';
-import { FaBookOpen, FaStickyNote, FaTimes, FaRegFileAlt } from 'react-icons/fa';
+import { FaTimes, FaStickyNote, FaBookOpen, FaPen, FaRegFileAlt,FaChevronRight,FaSun, FaMoon  } from 'react-icons/fa';
 import { AuthContext } from '../../Context/authContext';
 import axios from '../../../axiosConfig';
 
@@ -16,6 +16,7 @@ const PdfViewer = ({ file, bookId }) => {
   const [pageNumber, setPageNumber] = useState(1);
   const [numPages, setNumPages] = useState(null);
   const [highlights, setHighlights] = useState({});
+  const [NewHighlight, setNewHighlight] = useState({});
   const [selectedText, setSelectedText] = useState("");
   const [noteModalOpen, setNoteModalOpen] = useState(false);
   const [note, setNote] = useState("");
@@ -29,21 +30,8 @@ const PdfViewer = ({ file, bookId }) => {
   const pdfContainerRef = useRef(null);
   const selectionTimeout = useRef(null);
   const [highlightApplied, setHighlightApplied] = useState(false);
-
+  const [postAnnotations, setPostAnnotations] = useState([])
   const highlightsKey = `${HIGHLIGHTS_KEY_PREFIX}${file}`;
-
-  useEffect(() => {
-    const storedHighlights = localStorage.getItem(highlightsKey);
-    const storedAnnotations = localStorage.getItem(`${highlightsKey}_annotations`);
-
-    if (storedHighlights) {
-      setHighlights(JSON.parse(storedHighlights));
-    }
-
-    if (storedAnnotations) {
-      setAnnotations(JSON.parse(storedAnnotations));
-    }
-  }, [highlightsKey]);
 
   useEffect(() => {
     const fetchAnnotations = async () => {
@@ -58,8 +46,7 @@ const PdfViewer = ({ file, bookId }) => {
         data.annotations.forEach((annotation) => {
           annotation.highlights.forEach((highlight) => {
             if (!highlight.rect) {
-              console.warn(`Highlight is missing rect data:`, highlight);
-              return; // Skip this highlight
+              return; 
             }
             if (!highlightsData[pageNumber]) {
               highlightsData[pageNumber] = [];
@@ -75,21 +62,17 @@ const PdfViewer = ({ file, bookId }) => {
               text: highlight.text,
             });
           });
-          console.log('response', response.data)
           annotationsData.push(...annotation.notes.map((note) => ({
             text: note.text,
             note: note.note,
             pageNumber: note.pageNumber,
-            rect: note.rect // Ensure this is correctly included if needed
+            rect: note.rect 
           })));
-          console.log('annotationsData', annotationsData)
         });
 
         setHighlights(highlightsData);
         setAnnotations(annotationsData);
         setFlashcards(annotationsData);
-
-
       } catch (error) {
         console.error('Error fetching annotations:', error);
       }
@@ -99,55 +82,27 @@ const PdfViewer = ({ file, bookId }) => {
   }, [currentUser?.userId, bookId]);
 
 
-
-
-  const removeDuplicateHighlights = (highlights) => {
-    const uniqueHighlights = {};
-
-    Object.keys(highlights).forEach(pageNumber => {
-      uniqueHighlights[pageNumber] = highlights[pageNumber].filter((highlight, index, self) =>
-        index === self.findIndex((h) =>
-          h.rect.top === highlight.rect.top &&
-          h.rect.left === highlight.rect.left &&
-          h.rect.width === highlight.rect.width &&
-          h.rect.height === highlight.rect.height &&
-          h.color === highlight.color &&
-          h.text === highlight.text
-        )
-      );
-    });
-
-    return uniqueHighlights;
-  };
-
   useEffect(() => {
     const saveAnnotations = async () => {
       try {
-        const uniqueHighlights = removeDuplicateHighlights(highlights);
         const payload = {
           userId: currentUser?.userId,
           bookId: bookId,
-          highlights: uniqueHighlights,
-          annotations // Include notes here
+          highlights: NewHighlight,
+          postAnnotations 
         };
-        console.log("Payload for saving annotations:", payload);
         await axios.post(`/pdf/annotations/${bookId}`, payload);
-        setHighlightApplied(false); // Reset highlightApplied after saving
+        setHighlightApplied(false); 
       } catch (error) {
         console.error('Error saving annotations:', error);
       }
     };
 
-    if (highlightApplied) {
+    if (NewHighlight) {
       saveAnnotations();
     }
-  }, [highlightApplied, annotations, highlights, bookId, currentUser?.userId]);
+  }, [NewHighlight, postAnnotations]);
 
-
-
-  const saveAnnotations = async () => {
-
-  };
   // useEffect(() => {
   //   localStorage.setItem(highlightsKey, JSON.stringify(highlights));
   //   localStorage.setItem(`${highlightsKey}_annotations`, JSON.stringify(annotations));
@@ -212,6 +167,7 @@ const PdfViewer = ({ file, bookId }) => {
         color: selectedColor,
         text: selectedText, // Ensure this is set correctly
       }));
+      setNewHighlight(newHighlights)
       setHighlights(prev => ({
         ...prev,
         [pageNumber]: [
@@ -244,9 +200,9 @@ const PdfViewer = ({ file, bookId }) => {
 
   const saveNote = () => {
     const newAnnotation = { text: selectedText, note, pageNumber };
+    setPostAnnotations(newAnnotation)
     setAnnotations(prev => {
       const updatedAnnotations = [...prev, newAnnotation];
-      console.log("Updated annotations:", updatedAnnotations); // Debugging line
       return updatedAnnotations;
     });
     setFlashcards(prev => [
@@ -264,7 +220,6 @@ const PdfViewer = ({ file, bookId }) => {
       <>
         {highlights[pageNumber]?.map((highlight, index) => {
           if (!highlight.rect) {
-            console.warn(`Highlight on page ${pageNumber} is missing rect data:`, highlight);
             return null; // Skip rendering this highlight
           }
           return (
@@ -278,7 +233,7 @@ const PdfViewer = ({ file, bookId }) => {
                 height: highlight.rect.height,
                 backgroundColor: highlight.color,
                 pointerEvents: "none",
-                opacity: 0.4,
+                opacity: 0.2,
               }}
             />
           );
@@ -286,7 +241,6 @@ const PdfViewer = ({ file, bookId }) => {
         {annotations.filter(annotation => annotation.pageNumber === pageNumber).map((annotation, index) => {
           // Make sure rect data is available
           if (!annotation.rect) {
-            console.warn(`Annotation on page ${pageNumber} is missing rect data:`, annotation);
             return null; // Skip rendering this annotation
           }
           return (
@@ -316,27 +270,60 @@ const PdfViewer = ({ file, bookId }) => {
   return (
     <div className={`min-h-screen ${theme === 'dark' ? 'bg-gray-900 text-white' : theme === 'sepia' ? 'bg-[#5b4636] text-black' : 'bg-gray-100 text-black'} transition-colors duration-300`}>
 
-      <div className="bg-white shadow-md z-50">
-        <div className="flex justify-between items-center p-4 max-w-5xl mx-auto">
-          <div className="flex items-center space-x-4">
-
-          </div>
-          <div className="flex items-center space-x-4">
-            <button onClick={() => handleThemeChange('light')} className="px-4 py-2 bg-gray-200 text-gray-900 rounded">Light</button>
-            <button onClick={() => handleThemeChange('dark')} className="px-4 py-2 bg-gray-800 text-white rounded">Dark</button>
-            <button onClick={() => handleThemeChange('sepia')} className="px-4 py-2 bg-[#5b4636] text-white rounded">Sepia</button>
-          </div>
-          <button
-            onClick={() => setShowFlashCards(!showFlashCards)}
-            className="px-4 py-2 bg-green-500 text-white rounded "
+<div className="flex flex-row justify-between items-center p-4 bg-white shadow-md rounded-lg w-full mx-auto flex-nowrap">
+        {/* Font Size Controls
+        <div className="flex items-center space-x-4">
+          <button 
+            onClick={() => handleFontSizeChange(-2)} 
+            className="w-10 h-10 md:px-3 md:py-2 bg-gray-100 text-gray-700 rounded-full shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300 transition duration-150 ease-in-out"
           >
-            {showFlashCards ? <FaBookOpen /> : <FaStickyNote />}
+            A-
+          </button>
+          <span className="text-gray-700 font-medium hidden md:block">Font Size</span>
+          <button 
+            onClick={() => handleFontSizeChange(2)} 
+            className="w-10 h-10 md:px-3 md:py-2 bg-gray-100 text-gray-700 rounded-full shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300 transition duration-150 ease-in-out"
+          >
+            A+
+          </button>
+        </div> */}
+
+        {/* Theme Controls */}
+        <div className="flex items-center space-x-4">
+          <button 
+            onClick={() => handleThemeChange('light')} 
+            className="px-[10px] py-[10px] md:px-4 md:py-2 bg-gray-200 text-gray-800 rounded-full shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 transition duration-150 ease-in-out flex items-center justify-center"
+          >
+            <FaSun className="w-5 h-5 md:mr-2" />
+            <span className="hidden md:inline">Light</span>
+          </button>
+          <button 
+            onClick={() => handleThemeChange('dark')} 
+            className="px-[10px] py-[10px] md:px-4 md:py-2 bg-gray-800 text-white rounded-full shadow-sm hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500 transition duration-150 ease-in-out flex items-center justify-center"
+          >
+            <FaMoon className="w-5 h-5 md:mr-2" />
+            <span className="hidden md:inline">Dark</span>
+          </button>
+          <button 
+            onClick={() => handleThemeChange('sepia')} 
+            className="px-[10px] py-[10px] md:px-4 md:py-2 bg-yellow-200 text-yellow-800 rounded-full shadow-sm hover:bg-yellow-300 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition duration-150 ease-in-out flex items-center justify-center"
+          >
+            <FaBookOpen className="w-5 h-5 md:mr-2" />
+            <span className="hidden md:inline">Sepia</span>
           </button>
         </div>
+
+        {/* Flashcards Toggle */}
+        <button 
+          onClick={() => setShowFlashCards(!showFlashCards)} 
+          className="px-[10px] py-[10px] md:px-4 md:py-2 bg-green-500 text-white rounded-full shadow-sm hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 transition duration-150 ease-in-out flex items-center justify-center"
+        >
+          {showFlashCards ? <FaBookOpen className="w-5 h-5" /> : <FaStickyNote className="w-5 h-5" />}
+        </button>
       </div>
 
       <div
-        className="relative flex flex-col items-center p-4 pt-10 min-h-screen"
+        className="relative flex flex-col items-center  p-4 pt-10 min-h-screen"
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
       >
@@ -367,7 +354,7 @@ const PdfViewer = ({ file, bookId }) => {
             <div className="bg-gray-100 p-4 rounded-md shadow-lg w-full max-w-xs md:max-w-md lg:max-w-1/3 mx-4">
               <h2 className="text-lg font-bold mb-4 text-center">Select Highlight Color</h2>
               <div className="flex justify-center space-x-2 md:space-x-4">
-                {['yellow', 'green', 'blue', 'pink', 'red'].map(color => (
+                {['yellow', 'green', 'blue', 'purple', 'red'].map(color => (
                   <button
                     key={color}
                     className={`w-8 h-8 md:w-10 md:h-10 rounded-full border-2 ${color === selectedColor ? 'border-black' : 'border-transparent'}`}

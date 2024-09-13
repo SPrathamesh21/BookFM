@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
-import { ReactReader } from 'react-reader';
+import { ReactReader, ReactReaderStyle } from 'react-reader';
 import { FaTimes, FaStickyNote, FaBookOpen, FaPen, FaRegFileAlt,FaChevronRight,FaSun, FaMoon  } from 'react-icons/fa';
 import 'tailwindcss/tailwind.css';
 import { AuthContext } from '../../Context/authContext';
@@ -64,7 +64,6 @@ const EpubViewerComponent = ({ file, bookId }) => {
           setNotes(new Map(filteredNotes));
           setFlashCardNotes(new Map(filteredNotes));
           setFlashCardSelections(new Map(filteredSelections));
-  
           setTimeout(() => {
             reapplyHighlights();
           }, 500);
@@ -281,71 +280,104 @@ const EpubViewerComponent = ({ file, bookId }) => {
     };
   }, [showFlashCards, setShowFlashCards]);
 
+  const customReaderStyles = {
+    ...ReactReaderStyle,
+    readerArea: {
+      ...ReactReaderStyle.readerArea,
+      position: 'absolute',
+      margin:'0px',
+      backgroundColor: 'gray',
+    },
+    arrow:{
+      ...ReactReaderStyle.arrow,
+      color: 'gray',
+    },
+    tocArea: {
+      ...ReactReaderStyle.tocArea,
+      backgroundColor: 'gray',
+      color: "white"
+    },
+    reader: {
+      ...ReactReaderStyle.reader,
+      marginLeft: '-50px',
+      marginRight: '-50px',
+    },
+    container:{
+      ...ReactReaderStyle.container,
+      margin: '0px'
+    }
+  };
+  
   return (
     <div className="flex flex-col items-center justify-center h-screen p-4 bg-gray-100">
-<div className="flex flex-row justify-between items-center p-4 bg-white shadow-md rounded-lg mb-4 w-full mx-auto">
-  {/* Font Size Controls */}
-  <div className="flex items-center space-x-4 mb-4 md:mb-0">
-    <button 
-      onClick={() => handleFontSizeChange(-2)} 
-      className="px-3 py-2 bg-gray-100 text-gray-700 rounded-full shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300 transition duration-150 ease-in-out"
-    >
-      A-
-    </button>
-    <span className="text-gray-700 font-medium hidden md:block">Font Size</span>
-    <button 
-      onClick={() => handleFontSizeChange(2)} 
-      className="px-3 py-2 bg-gray-100 text-gray-700 rounded-full shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300 transition duration-150 ease-in-out"
-    >
-      A+
-    </button>
-  </div>
+      <div className="flex flex-row justify-between items-center p-4 bg-white shadow-md rounded-lg mb-4 w-full mx-auto flex-nowrap">
+        {/* Font Size Controls */}
+        <div className="flex items-center space-x-4">
+          <button 
+            onClick={() => handleFontSizeChange(-2)} 
+            className="w-10 h-10 md:px-3 md:py-2 bg-gray-100 text-gray-700 rounded-full shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300 transition duration-150 ease-in-out"
+          >
+            A-
+          </button>
+          <span className="text-gray-700 font-medium hidden md:block">Font Size</span>
+          <button 
+            onClick={() => handleFontSizeChange(2)} 
+            className="w-10 h-10 md:px-3 md:py-2 bg-gray-100 text-gray-700 rounded-full shadow-sm hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300 transition duration-150 ease-in-out"
+          >
+            A+
+          </button>
+        </div>
 
-  {/* Theme Controls */}
-  <div className="flex items-center space-x-4 mb-4 md:mb-0">
-    <button 
-      onClick={() => handleThemeChange('light')} 
-      className="px-4 py-2 bg-gray-200 text-gray-800 rounded-full shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 transition duration-150 ease-in-out flex items-center justify-center">
-      <span className="hidden md:inline">Light</span>
-      <FaSun className="w-5 h-5 md:hidden" />
-    </button>
-    <button 
-      onClick={() => handleThemeChange('dark')} 
-      className="px-4 py-2 bg-gray-800 text-white rounded-full shadow-sm hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500 transition duration-150 ease-in-out flex items-center justify-center">
-      <span className="hidden md:inline">Dark</span>
-      <FaMoon className="w-5 h-5 md:hidden" />
-    </button>
-    <button 
-      onClick={() => handleThemeChange('sepia')} 
-      className="px-4 py-2 bg-yellow-200 text-yellow-800 rounded-full shadow-sm hover:bg-yellow-300 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition duration-150 ease-in-out flex items-center justify-center">
-      <span className="hidden md:inline">Sepia</span>
-      <FaBookOpen className="w-5 h-5 md:hidden" />
-    </button>
-  </div>
+        {/* Theme Controls */}
+        <div className="flex items-center space-x-4">
+          <button 
+            onClick={() => handleThemeChange('light')} 
+            className="px-[10px] py-[10px] md:px-4 md:py-2 bg-gray-200 text-gray-800 rounded-full shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 transition duration-150 ease-in-out flex items-center justify-center"
+          >
+            <FaSun className="w-5 h-5 md:mr-2" />
+            <span className="hidden md:inline">Light</span>
+          </button>
+          <button 
+            onClick={() => handleThemeChange('dark')} 
+            className="px-[10px] py-[10px] md:px-4 md:py-2 bg-gray-800 text-white rounded-full shadow-sm hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500 transition duration-150 ease-in-out flex items-center justify-center"
+          >
+            <FaMoon className="w-5 h-5 md:mr-2" />
+            <span className="hidden md:inline">Dark</span>
+          </button>
+          <button 
+            onClick={() => handleThemeChange('sepia')} 
+            className="px-[10px] py-[10px] md:px-4 md:py-2 bg-yellow-200 text-yellow-800 rounded-full shadow-sm hover:bg-yellow-300 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition duration-150 ease-in-out flex items-center justify-center"
+          >
+            <FaBookOpen className="w-5 h-5 md:mr-2" />
+            <span className="hidden md:inline">Sepia</span>
+          </button>
+        </div>
 
-  {/* Flashcards Toggle */}
-  <button 
-    onClick={() => setShowFlashCards(!showFlashCards)} 
-    className="px-4 py-2 bg-green-500 text-white rounded-full shadow-sm hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 transition duration-150 ease-in-out"
-  >
-    {showFlashCards ? <FaBookOpen className="w-5 h-5" /> : <FaStickyNote className="w-5 h-5" />}
-  </button>
-</div>
-
+        {/* Flashcards Toggle */}
+        <button 
+          onClick={() => setShowFlashCards(!showFlashCards)} 
+          className="px-[10px] py-[10px] md:px-4 md:py-2 bg-green-500 text-white rounded-full shadow-sm hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 transition duration-150 ease-in-out flex items-center justify-center"
+        >
+          {showFlashCards ? <FaBookOpen className="w-5 h-5" /> : <FaStickyNote className="w-5 h-5" />}
+        </button>
+      </div>
 
       {fileData && (
-        <div className="w-full h-4/5 border rounded overflow-hidden epub-viewer">
+        <div className="w-full h-[80vh] md:h-4/5  relative rounded-lg overflow-hidden">
           <ReactReader
             url={fileData}
             location={location}
             locationChanged={locationChanged}
+            readerStyles={customReaderStyles}
             getRendition={(rendition) => {
               renditionRef.current = rendition;
               rendition.themes.fontSize(`${fontSize}px`);
+              // Register themes with cleaner background and text colors
+              rendition.themes.register('light', { body: { background: '#fdfdfd', color: '#333' } });
               rendition.themes.register('dark', { body: { background: '#1a1a1a', color: '#d3d3d3' } });
               rendition.themes.register('sepia', { body: { background: '#f4ecd8', color: '#5b4636' } });
-              handleThemeChange(theme);
-              reapplyHighlights();
+              handleThemeChange(theme); // Apply chosen theme
+              reapplyHighlights(); // Reapply highlights after location change
             }}
             onError={(error) => console.error('ReactReader Error:', error)}
           />

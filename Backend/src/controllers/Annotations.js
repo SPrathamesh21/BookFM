@@ -41,13 +41,13 @@ exports.saveAnnotations = async (req, res) => {
 // Get highlights and notes for a specific book
 exports.getAnnotations = async (req, res) => {
   const { bookId, userId } = req.params;
-  console.log('userId', userId)
+
   try {
     // Retrieve annotations for the specified book
     const annotations = await Annotation.findOne({ bookId, userId });
 
     if (!annotations) {
-        console.log('lskdfjslskdjf')
+        console.log('annotations not found for the userId and bookId')
       return res.status(404).json({ message: 'No annotations found' });
     }
 

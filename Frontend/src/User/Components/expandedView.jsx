@@ -25,11 +25,9 @@ const ExpandedView = () => {
   };
   useEffect(() => {
     const fetchBookDetails = async () => {
-      console.log('bookID', bookId);
       try {
         const response = await axios.get(`/get-book/${bookId}`);
         setBook(response.data);
-        console.log('response data', response.data);
         if (response.data.EPUBbase64.id) {
           const fileId = response.data.EPUBbase64.id;
           const fileResponse = await axios.get(`/file/${fileId}`, { responseType: 'blob' });
@@ -108,8 +106,7 @@ const ExpandedView = () => {
       alert('Failed to add book to library.');
     }
   };
-
-  console.log('expanded view: ', epubFile, fileType)
+  
   useEffect(() => {
     if (currentUser) {
       const fetchFavorites = async () => {
