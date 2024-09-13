@@ -1,184 +1,166 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { ReactReader } from 'react-reader';
-import { FaTimes, FaStickyNote, FaBookOpen, FaPen } from 'react-icons/fa'; 
-import 'tailwindcss/tailwind.css';
+import React, { useState, useEffect, useRef } from 'react';
+import { Drawer, Button, Typography, Box, AppBar, Toolbar, IconButton, Slider, TextField } from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import TableChartIcon from '@mui/icons-material/TableChart'; 
+import ePub from 'epubjs';
 
 const EpubReader = () => {
-  const [location, setLocation] = useState(null);
-  const [fontSize, setFontSize] = useState(16); 
-  const [theme, setTheme] = useState('light');
-  const [fileData, setFileData] = useState(null);
-  const [selections, setSelections] = useState([]);
-  const [highlightColor, setHighlightColor] = useState('red'); 
-  const [showColorPicker, setShowColorPicker] = useState(false);
-  const [selectionCfi, setSelectionCfi] = useState(null);
-  const [notes, setNotes] = useState(new Map()); // To store notes
-  const [showFlashCards, setShowFlashCards] = useState(false);
-  const [showNoteIcon, setShowNoteIcon] = useState(false); // To show note icon after text selection
-  const [noteModalVisible, setNoteModalVisible] = useState(false); // For the note modal
-  const [currentNote, setCurrentNote] = useState(''); // For storing the current note text
-  const renditionRef = useRef(null);
-  const highlightRefs = useRef(new Map()); // To store references to highlights
+    const [book, setBook] = useState(null);
+    const [rendition, setRendition] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [progress, setProgress] = useState(0);
+    const [settingsDrawerOpen, setSettingsDrawerOpen] = useState(false);
+    const [tocDrawerOpen, setTocDrawerOpen] = useState(false);
+    const [toc, setToc] = useState([]);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [searchResults, setSearchResults] = useState([]);
+    const [currentResultIndex, setCurrentResultIndex] = useState(0);
+    const containerRef = useRef(null);
 
-  // Change Font Size
-  const handleFontSizeChange = (increment) => {
-    const newSize = fontSize + increment;
-    setFontSize(newSize);
-    if (renditionRef.current) {
-      renditionRef.current.themes.fontSize(`${newSize}px`);
-      reapplyHighlights(); // Reapply highlights after font size change
-    }
-  };
+    const modes = {
+        night: { backgroundColor: '#000000', fontColor: '#ffffff' },
+        sepia: { backgroundColor: '#f4ecd8', fontColor: '#5b4636' },
+        white: { backgroundColor: '#ffffff', fontColor: '#000000' }
+    };
 
-  // Change Theme and Apply the respective styles
-  const handleThemeChange = (newTheme) => {
-    setTheme(newTheme);
-    if (renditionRef.current) {
-      const themes = renditionRef.current.themes;
-      switch (newTheme) {
-        case 'dark':
-          themes.override('color', '#d3d3d3'); // Softer white
-          themes.override('background', '#1a1a1a'); // Softer black
-          break;
-        case 'light':
-          themes.override('color', '#1a1a1a');
-          themes.override('background', '#d3d3d3');
-          break;
-        case 'sepia':
-          themes.override('color', '#5b4636');
-          themes.override('background', '#f4ecd8');
-          break;
-        default:
-          break;
-      }
-    }
-  };
-
-  // Handle location change for pagination
-  const locationChanged = (epubcifi) => {
-    setLocation(epubcifi);
-  };
-
-  // Handle file upload using FileReader
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setFileData(event.target.result); 
-      };
-      reader.readAsArrayBuffer(file);
-    }
-  };
-
-  // Add a highlight with the selected color
-  const handleHighlight = (cfiRange, color) => {
-    if (renditionRef.current) {
-      const text = renditionRef.current.getRange(cfiRange).toString();
-      setSelections((list) => [
-        ...list,
-        { text, cfiRange, color },
-      ]);
-      applyHighlight(cfiRange, color);
-      setShowNoteIcon(true); // Show the note icon when the highlight is added
-    }
-  };
-
-  // Tailwind color mappings
-  const tailwindColorMap = {
-    red: '#f87171',   // Tailwind red-400
-    yellow: '#facc15', // Tailwind yellow-400
-    green: '#4ade80', // Tailwind green-400
-    blue: '#60a5fa',   // Tailwind blue-400
-    purple: '#c084fc'  // Tailwind purple-400
-  };
-
-  // Function to apply a highlight to the text
-  const applyHighlight = (cfiRange, color) => {
-    if (renditionRef.current) {
-      const annotations = renditionRef.current.annotations;
-      const highlightId = `${cfiRange}-${color}`;
-      const tailwindColor = tailwindColorMap[color]; // Get corresponding Tailwind color
-
-      annotations.add(
-        'highlight',
-        cfiRange,
-        {},
-        () => console.log('click on selection', cfiRange),
-        highlightId,
-        { fill: tailwindColor, 'fill-opacity': '0.5', 'mix-blend-mode': 'multiply' }
-      );
-      highlightRefs.current.set(highlightId, cfiRange); // Store the highlight reference
-    }
-  };
-
-  // Clear all highlights
-  const clearHighlights = () => {
-    if (renditionRef.current) {
-      const annotations = renditionRef.current.annotations;
-      highlightRefs.current.forEach((cfiRange, highlightId) => {
-        annotations.remove(cfiRange, 'highlight');
-      });
-      highlightRefs.current.clear(); // Clear the map
-    }
-  };
-
-  // Reapply all highlights after a font size change
-  const reapplyHighlights = () => {
-    clearHighlights();
-    selections.forEach(({ cfiRange, color }) => {
-      applyHighlight(cfiRange, color); // Reapply highlight for each selection
+    const [settings, setSettings] = useState({
+        backgroundColor: modes.white.backgroundColor,
+        fontColor: modes.white.fontColor,
+        fontFamily: 'serif',
+        fontSize: '16px',
+        columnCount: 1
     });
-  };
 
-  // Handle color selection
-  const handleColorSelect = (color) => {
-    setHighlightColor(color);
-    if (selectionCfi) {
-      handleHighlight(selectionCfi, color); // Apply the selected color
-      setShowColorPicker(false); // Close color picker
-      setShowNoteIcon(true); // Show note icon after color is selected
-    }
-  };
+    const handleFileUpload = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const book = ePub(e.target.result);
+                setBook(book);
+            };
+            reader.readAsArrayBuffer(file);
+        }
+    };
 
-  // Show note modal
-  const addNote = () => {
-    if (selectionCfi) {
-      setNoteModalVisible(true); // Open the modal
-    }
-  };
+    useEffect(() => {
+        if (book && containerRef.current) {
+            const rendition = book.renderTo(containerRef.current, {
+                width: '100%',
+                height: '100%',
+                flow: 'paginated',
+            });
 
-  // Save the note and close the modal
-  const handleSaveNote = () => {
-    if (currentNote && selectionCfi) {
-      setNotes((prevNotes) => new Map(prevNotes).set(selectionCfi, currentNote));
-      setNoteModalVisible(false); // Close the modal
-      setShowNoteIcon(false); // Hide the note icon after adding the note
-      setCurrentNote(''); // Clear the current note text
-    }
-  };
+            rendition.display().then(async () => {
+                setRendition(rendition);
 
-  // Handle color picker visibility
-  const handleCloseColorPicker = () => {
-    setShowColorPicker(false);
-    setSelectionCfi(null); // Clear the selected text CFI
-    setShowNoteIcon(false); // Hide the note icon
-  };
+                const cachedLocations = localStorage.getItem('bookLocations');
+                if (cachedLocations) {
+                    rendition.book.locations.load(cachedLocations);
+                } else {
+                    await rendition.book.locations.generate(1000);
+                    setTotalPages(rendition.book.locations.total);
+                    localStorage.setItem('bookLocations', rendition.book.locations.save());
+                }
 
-  // Set up the selection and display color picker and note icon
-  useEffect(() => {
-    if (renditionRef.current) {
-      const setRenderSelection = (cfiRange, contents) => {
-        setSelectionCfi(cfiRange);
-        setShowColorPicker(true); 
-        contents.window.getSelection()?.removeAllRanges(); 
-      };
-      renditionRef.current.on('selected', setRenderSelection);
-      return () => {
-        renditionRef.current?.off('selected', setRenderSelection);
-      };
-    }
-  }, [renditionRef.current]);
+                const location = rendition.currentLocation();
+                setCurrentPage(rendition.book.locations.locationFromCfi(location.start.cfi).start);
+            });
+
+            rendition.on('relocated', (location) => {
+                const currentPage = rendition.book.locations.locationFromCfi(location.start.cfi).start;
+                setCurrentPage(currentPage);
+                setProgress((currentPage / rendition.book.locations.total) * 100);
+            });
+
+            book.loaded.navigation.then(nav => {
+                setToc(nav.toc);
+            });
+        }
+    }, [book]);
+
+    useEffect(() => {
+        if (rendition) {
+            rendition.themes.override('background-color', settings.backgroundColor);
+            rendition.themes.override('color', settings.fontColor);
+            rendition.themes.override('font-family', settings.fontFamily);
+            rendition.themes.override('font-size', settings.fontSize);
+            rendition.themes.override('column-count', settings.columnCount);
+        }
+    }, [settings, rendition]);
+
+    const handleNext = () => {
+        if (rendition) rendition.next();
+    };
+
+    const handlePrev = () => {
+        if (rendition) rendition.prev();
+    };
+
+    const handleSettingsChange = (key, value) => {
+        setSettings((prev) => ({
+            ...prev,
+            [key]: value
+        }));
+    };
+
+    const handleModeChange = (mode) => {
+        setSettings({
+            backgroundColor: modes[mode].backgroundColor,
+            fontColor: modes[mode].fontColor,
+            fontFamily: settings.fontFamily,
+            fontSize: settings.fontSize,
+            columnCount: settings.columnCount
+        });
+    };
+
+    const handleToCClick = async (href) => {
+        if (rendition) {
+            await rendition.display(href);
+            const location = rendition.currentLocation();
+            const currentPage = rendition.book.locations.locationFromCfi(location.start.cfi).start;
+            setCurrentPage(currentPage);
+        }
+    };
+
+    const handleSearch = async () => {
+        if (rendition && searchTerm) {
+            try {
+                const results = await book.search(searchTerm);
+
+                if (results.length > 0) {
+                    setSearchResults(results);
+                    setCurrentResultIndex(0);
+                    await rendition.display(results[0].cfi); // Jump to first result
+                    alert(`Found ${results.length} results for "${searchTerm}".`);
+                } else {
+                    alert('Search term not found in the book.');
+                }
+            } catch (error) {
+                console.error("Error during search:", error);
+                alert("Search failed.");
+            }
+        }
+    };
+
+    const handleNextResult = async () => {
+        if (searchResults.length > 0) {
+            const nextIndex = (currentResultIndex + 1) % searchResults.length;
+            setCurrentResultIndex(nextIndex);
+            await rendition.display(searchResults[nextIndex].cfi);
+        }
+    };
+
+    const handlePrevResult = async () => {
+        if (searchResults.length > 0) {
+            const prevIndex = (currentResultIndex - 1 + searchResults.length) % searchResults.length;
+            setCurrentResultIndex(prevIndex);
+            await rendition.display(searchResults[prevIndex].cfi);
+        }
+    };
 
   return (
     <div className="flex flex-col items-center justify-center h-screen p-4 bg-gray-100">
@@ -305,42 +287,33 @@ const EpubReader = () => {
         </div>
       )}
 
-{showFlashCards && (
-  <div className={`fixed inset-y-0 right-0 z-50 w-80 bg-white overflow-auto p-4 shadow-lg transform transition-transform duration-300 ease-in-out ${showFlashCards ? 'translate-x-0' : 'translate-x-full'}`}>
-    <div className="flex justify-between items-center mb-4">
-      <h2 className="text-xl font-bold">Flash Cards</h2>
-      <button 
-        onClick={() => setShowFlashCards(false)} 
-        className="text-gray-500 hover:text-gray-700 focus:outline-none"
-      >
-        <FaTimes />
-      </button>
-    </div>
-    <ul>
-      {Array.from(notes.entries()).map(([cfiRange, note]) => (
-        <li key={cfiRange} className="flex items-center space-x-4 mb-2">
-          <FaStickyNote className="text-yellow-500" />
-          <div
-            className="cursor-pointer underline"
-            onClick={() => {
-              setLocation(cfiRange); 
-              setShowFlashCards(false);
-            }}
+      {showFlashCards && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-white overflow-auto p-4 shadow-lg">
+          <h2 className="text-xl font-bold mb-4">Flash Cards</h2>
+          <ul>
+            {Array.from(notes.entries()).map(([cfiRange, note]) => (
+              <li key={cfiRange} className="flex items-center space-x-4 mb-2">
+                <FaStickyNote className="text-yellow-500" />
+                <div
+                  className="cursor-pointer underline"
+                  onClick={() => {
+                    setLocation(cfiRange); 
+                    setShowFlashCards(false);
+                  }}
+                >
+                  {note}
+                </div>
+              </li>
+            ))}
+          </ul>
+          <button 
+            onClick={() => setShowFlashCards(false)} 
+            className="px-4 py-2 bg-blue-500 text-white rounded mt-4 self-center"
           >
-            {note}
-          </div>
-        </li>
-      ))}
-    </ul>
-    <button 
-      onClick={() => setShowFlashCards(false)} 
-      className="px-4 py-2 bg-blue-500 text-white rounded mt-4 self-center"
-    >
-      Close Flash Cards
-    </button>
-  </div>
-)}
-
+            Close Flash Cards
+          </button>
+        </div>
+      )}
     </div>
   );
 };

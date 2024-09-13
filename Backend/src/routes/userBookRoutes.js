@@ -3,7 +3,7 @@ const router = express.Router();
 const { getBookById, getBooks, getSearchedEbooks } = require('../controllers/userController');
 const { sendOtp, verifyOtpAndSignup, resendOtp, login } = require('../controllers/otpController');
 const { authenticateToken } = require('../middleware/authMiddleware');
-const { getNotifications, updateNotification } = require('../controllers/userController');// Route to get all books
+const { getNotifications, updateNotification, getEpubFile } = require('../controllers/userController');// Route to get all books
 router.get('/get-books', getBooks);
 
 // Route to get a book by ID
@@ -30,6 +30,6 @@ router.post('/logout', (req, res) => {
 router.get('/notifications', authenticateToken, getNotifications);
 router.put('/notifications/:id', authenticateToken, updateNotification);
 
-
+router.get('/file/:id', getEpubFile);
 
 module.exports = router;

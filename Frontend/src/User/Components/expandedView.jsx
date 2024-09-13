@@ -12,19 +12,47 @@ const ExpandedView = () => {
   const [isReadHover, setIsReadHover] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [activeHearts, setActiveHearts] = useState({});
+  const [epubFile, setEpubFile] = useState(null);
+  const [fileType, setFileType] = useState(null); 
   const { currentUser } = useContext(AuthContext);
-
+  const blobToBase64 = (blob) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  };
   useEffect(() => {
     const fetchBookDetails = async () => {
+      console.log('bookID', bookId);
       try {
         const response = await axios.get(`/get-book/${bookId}`);
         setBook(response.data);
+        console.log('response data', response.data);
+        if (response.data.EPUBbase64.id) {
+          const fileId = response.data.EPUBbase64.id;
+          const fileResponse = await axios.get(`/file/${fileId}`, { responseType: 'blob' });
+          
+          const filename = response.data.EPUBbase64.filename;
+          const fileExtension = filename.split('.').pop(); // Extract the file extension
+          const fileType = fileExtension === 'epub' ? 'epub' : fileExtension === 'pdf' ? 'pdf' : 'unknown'; // Set file type based on extension
+  
+          const blob = fileResponse.data;
+          const base64 = await blobToBase64(blob);
+          localStorage.setItem('epubFileData', base64);
+          localStorage.setItem('fileType', fileType);
+          setEpubFile(URL.createObjectURL(blob));
+          setFileType(fileType); // Set the dynamic file type
+        }
       } catch (error) {
         console.error('Error fetching book details:', error);
       }
     };
+  
     fetchBookDetails();
   }, [bookId]);
+  
 
   useEffect(() => {
     if (book && book.coverImages.length > 1) {
@@ -64,11 +92,16 @@ const ExpandedView = () => {
 
     try {
       const response = await axios.post('/add-to-library', { userId: currentUser.userId, bookId });
-      console.log('response.data', response.data)
-      if (response.data.success) {
-        alert(response.data.message); 
-      } else{
-        alert(response.data.message);
+      if (response) {
+        navigate('/documentviewer', {
+          state: {
+            fileUrl: localStorage.getItem('epubFileData'),
+            fileType: localStorage.getItem('fileType'),
+            BookID: bookId
+          },
+        });
+      } else {
+        navigate('/documentviewer');
       }
     } catch (error) {
       console.error('Error adding book to library:', error);
@@ -76,6 +109,7 @@ const ExpandedView = () => {
     }
   };
 
+  console.log('expanded view: ', epubFile, fileType)
   useEffect(() => {
     if (currentUser) {
       const fetchFavorites = async () => {
@@ -115,9 +149,7 @@ const ExpandedView = () => {
     }
   };
 
-  if (!book) return <div className="flex justify-center items-center text-center bg-gray-800 text-gray-100 min-h-screen">
-    Loading...
-  </div>;
+  if (!book) return <div className="flex justify-center items-center text-center bg-gray-800 text-gray-100 min-h-screen">Loading...</div>;
 
   return (
     <div className="relative flex flex-col md:flex-row p-6 md:p-8 rounded-xl bg-gradient-to-r from-gray-100 to-white max-w-4xl mx-auto my-5 shadow-lg transform transition-transform ease-linear cursor-pointer overflow-hidden">
@@ -172,7 +204,7 @@ const ExpandedView = () => {
           <h2 className="text-3xl md:text-4xl font-bold mb-3 text-gray-800" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.1)' }}>
             {book.bookName}
           </h2>
-          <h4 className="text-xl md:text-2xl italic mb-4 text-gray-600">by {book.author}</h4>
+          <h4 className="text-xl md:text-2xl italic mb-4 text-gray-600">by {book.author}          </h4>
           <p className="text-base md:text-lg mb-5 text-gray-700 leading-relaxed max-h-32 overflow-y-auto">
             Book Description: <span><br/></span>{book.description}
           </p>
@@ -186,6 +218,7 @@ const ExpandedView = () => {
             <FaBookOpen size={20} className="mr-2" />
             Read
           </button>
+
         </div>
       </div>
     </div>
@@ -193,3 +226,4 @@ const ExpandedView = () => {
 };
 
 export default ExpandedView;
+

@@ -15,12 +15,13 @@ import { ToastContainer } from 'react-toastify';
 import { AuthProvider } from './Context/authContext'
 import NotFound from './NotFound';
 import PdfViewerComponent from './User/Components/PdfViewerComponent';
-import DocumentViewer from './User/Components/DocumentViewer';
 import EPUB from './User/Components/EpubViewerComponent';
 import EBookReader from './User/Components/EpubViewerComponent';
 import YourLibrary from './User/Pages/YourLibrary';
 import EpubReader from './User/Pages/Example';
 import Flipbook from './User/Components/FlipBook';
+import DocumentViewer from './User/Pages/DocumentViewer';
+
 
 
 function App() { 
@@ -62,6 +63,7 @@ function App() {
         <Route path="/pdf" element={<PdfViewerComponent />} />
         <Route path="/flipbook" element={<Flipbook />} />
         <Route path="/404" element={<NotFound />} /> 
+        <Route path="/documentviewer" element={<DocumentViewer />} /> 
         <Route path="*" element={<Navigate to="/404" replace />} /> 
 
       </Routes>

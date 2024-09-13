@@ -8,6 +8,9 @@ const userBookRoutes = require('./routes/userBookRoutes')
 const cookieParser = require('cookie-parser');
 const libraryRoutes = require('./routes/UserLibraryRoutes');
 const favoriteRoutes = require('./routes/FavoriteRoutes')
+const annotationRoutes = require('./routes/AnnotationsRoutes')
+const pdfannotationRoutes = require('./routes/PdfAnnotation')
+
 dotenv.config();
 const app = express();
 
@@ -33,6 +36,8 @@ app.use('/api/books', bookRoutes);
 app.use('/', userBookRoutes)
 app.use('/', libraryRoutes);
 app.use('/', favoriteRoutes);
+app.use('/', annotationRoutes)
+app.use('/', pdfannotationRoutes)
 
 // Connect to MongoDB
 connectDB().then(() => {

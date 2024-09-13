@@ -2,6 +2,17 @@ const Book = require('../models/AdminbookModel')
 const User = require('../models/User')
 const Notification = require('../models/AdminNotification'); 
 
+const mongoose = require('mongoose');
+const { GridFSBucket, ObjectId } = require('mongodb');
+
+// Initialize GridFS once connection is open
+let gfsBucket;
+
+mongoose.connection.once('open', () => {
+  gfsBucket = new GridFSBucket(mongoose.connection.db, {
+    bucketName: 'epubs' // Ensure it matches the name used for uploading files
+  });
+});
 // Get all books
 exports.getBooks = async (req, res) => {
   try {
@@ -16,6 +27,7 @@ exports.getBooks = async (req, res) => {
 exports.getBookById = async (req, res) => {
     try {
       const bookId = req.params.bookId;
+      console.log('bookId', bookId)
       const book = await Book.findById(bookId);
       if (!book) {
         return res.status(404).json({ message: 'Book not found' });
@@ -174,6 +186,44 @@ exports.updateNotification = async (req, res) => {
   } catch (error) {
     console.error('Error updating notification:', error);
     res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+// Endpoint to fetch the EPUB file
+exports.getEpubFile = async (req, res) => {
+  try {
+    const fileId = req.params.id; // Get the fileId from the request params
+    const objectId = new ObjectId(fileId); // Convert fileId to an ObjectId
+
+    // Find the file metadata in the epubs.files collection
+    const file = await mongoose.connection.db.collection('epubs.files').findOne({ _id: objectId });
+
+    if (!file) {
+      return res.status(404).json({ message: 'File not found' });
+    }
+    console.log('file: ',)
+    // Create a read stream to download the binary data from GridFS
+    const readStream = gfsBucket.openDownloadStream(objectId);
+
+    // Set headers to tell the browser that the file is an EPUB
+    res.setHeader('Content-Disposition', `inline; filename="${file.filename}"`);
+    res.setHeader('Content-Type', 'application/epub+zip'); // MIME type for EPUB files
+
+    // Pipe the binary data to the response
+    readStream.pipe(res);
+    readStream.on('data', (chunk) => {
+      console.log('Chunk received:',);  // Each chunk of the binary file
+    });
+    
+    // Handle streaming errors
+    readStream.on('error', (error) => {
+      console.error('Error streaming file:', error);
+      res.status(500).json({ message: 'Error streaming file' });
+    });
+
+  } catch (error) {
+    console.error('Error fetching file:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
