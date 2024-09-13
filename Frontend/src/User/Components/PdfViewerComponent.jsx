@@ -50,11 +50,11 @@ const PdfViewer = ({ file, bookId }) => {
       try {
         const response = await axios.get(`/pdf/annotations/${currentUser?.userId}/${bookId}`);
         const data = response.data;
-  
+
         // Transform the data into the required format
         const highlightsData = {};
         const annotationsData = [];
-  
+
         data.annotations.forEach((annotation) => {
           annotation.highlights.forEach((highlight) => {
             if (!highlight.rect) {
@@ -84,26 +84,26 @@ const PdfViewer = ({ file, bookId }) => {
           })));
           console.log('annotationsData', annotationsData)
         });
-  
+
         setHighlights(highlightsData);
         setAnnotations(annotationsData);
         setFlashcards(annotationsData);
 
-  
+
       } catch (error) {
         console.error('Error fetching annotations:', error);
       }
     };
-  
+
     fetchAnnotations();
   }, [currentUser?.userId, bookId]);
-  
-  
-  
+
+
+
 
   const removeDuplicateHighlights = (highlights) => {
     const uniqueHighlights = {};
-  
+
     Object.keys(highlights).forEach(pageNumber => {
       uniqueHighlights[pageNumber] = highlights[pageNumber].filter((highlight, index, self) =>
         index === self.findIndex((h) =>
@@ -116,10 +116,10 @@ const PdfViewer = ({ file, bookId }) => {
         )
       );
     });
-  
+
     return uniqueHighlights;
   };
-  
+
   useEffect(() => {
     const saveAnnotations = async () => {
       try {
@@ -137,16 +137,16 @@ const PdfViewer = ({ file, bookId }) => {
         console.error('Error saving annotations:', error);
       }
     };
-  
+
     if (highlightApplied) {
       saveAnnotations();
     }
   }, [highlightApplied, annotations, highlights, bookId, currentUser?.userId]);
-  
-  
+
+
 
   const saveAnnotations = async () => {
-    
+
   };
   // useEffect(() => {
   //   localStorage.setItem(highlightsKey, JSON.stringify(highlights));
@@ -257,8 +257,8 @@ const PdfViewer = ({ file, bookId }) => {
     setNote("");
     setHighlightApplied(true); // Trigger saving
   };
-  
-  
+
+
   const renderHighlights = () => {
     return (
       <>
@@ -341,7 +341,7 @@ const PdfViewer = ({ file, bookId }) => {
         onMouseUp={handleMouseUp}
       >
         <div
-          className="relative md:w-4xl w-xl overflow-hidden" // Adjust max-width as needed
+          className="relative md:w-4xl w-xl  overflow-hidden" // Adjust max-width as needed
           ref={pdfContainerRef}
         >
           <Document
@@ -354,23 +354,23 @@ const PdfViewer = ({ file, bookId }) => {
               renderTextLayer
               renderAnnotationLayer
               // Adjust these values for scaling
-              width={Math.min(window.innerWidth * 0.7, 1200)} // Example: 90% of the viewport width
-              // You can adjust `height` or `scale` as needed for correct aspect ratio
+              width={window.innerWidth <= 768 ? window.innerWidth * 1: Math.min(window.innerWidth * 0.7, 1200)} // Responsive scaling for mobile (95% width) // Example: 90% of the viewport width
+              
             />
           </Document>
 
           {renderHighlights()}
         </div>
 
-      {showColorModal && (
+        {showColorModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-md shadow-lg w-1/3">
-              <h2 className="text-lg font-bold mb-4">Select Highlight Color</h2>
-              <div className="flex space-x-4">
+            <div className="bg-gray-100 p-4 rounded-md shadow-lg w-full max-w-xs md:max-w-md lg:max-w-1/3 mx-4">
+              <h2 className="text-lg font-bold mb-4 text-center">Select Highlight Color</h2>
+              <div className="flex justify-center space-x-2 md:space-x-4">
                 {['yellow', 'green', 'blue', 'pink', 'red'].map(color => (
                   <button
                     key={color}
-                    className={`w-10 h-10 rounded-full border-2 ${color === selectedColor ? 'border-black' : 'border-transparent'}`}
+                    className={`w-8 h-8 md:w-10 md:h-10 rounded-full border-2 ${color === selectedColor ? 'border-black' : 'border-transparent'}`}
                     style={{ backgroundColor: color }}
                     onClick={() => setSelectedColor(color)}
                   />
@@ -378,7 +378,7 @@ const PdfViewer = ({ file, bookId }) => {
               </div>
               <div className="flex justify-end mt-4">
                 <button
-                  className="px-4 py-2 bg-blue-500 text-white rounded mr-2"
+                  className="px-3 py-1 md:px-4 md:py-2 bg-blue-500 text-white rounded mr-2"
                   onClick={() => {
                     applyHighlight();
                     setShowColorModal(false);
@@ -387,7 +387,7 @@ const PdfViewer = ({ file, bookId }) => {
                   Highlight
                 </button>
                 <button
-                  className="px-4 py-2 bg-gray-500 text-white rounded"
+                  className="px-3 py-1 md:px-4 md:py-2 bg-gray-500 text-white rounded"
                   onClick={() => setShowColorModal(false)}
                 >
                   Cancel
@@ -396,6 +396,7 @@ const PdfViewer = ({ file, bookId }) => {
             </div>
           </div>
         )}
+
 
         {noteModalOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -495,7 +496,7 @@ const PdfViewer = ({ file, bookId }) => {
           </div>
         </div>
 
-        <div className="flex justify-between w-full px-4 py-2">
+        <div className="flex justify-between w-full px-4 py-2 ">
           <button
             onClick={goToPrevPage}
             className="px-4 py-2 bg-blue-500 text-white rounded"
@@ -503,7 +504,7 @@ const PdfViewer = ({ file, bookId }) => {
           >
             Previous
           </button>
-          <span>
+          <span className="bg-gray-300 rounded-md mt-3">
             Page {pageNumber} of {numPages}
           </span>
           <button
