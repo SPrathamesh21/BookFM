@@ -19,6 +19,7 @@ function EditEbook() {
     author: "",
     description: "",
     category: "",
+    recommendedByCabin:"",
   });
   const [coverImages, setCoverImages] = useState([]);
   const [coverImagePreviews, setCoverImagePreviews] = useState([]);
@@ -26,12 +27,14 @@ function EditEbook() {
   const [imageToReplace, setImageToReplace] = useState(null);
   const [dropdown, setDropdown] = useState({
     category: false,
+   
+    
   });
   const [isSubmitting, setIsSubmitting] = useState(false); // Loader state
 
   const navigate = useNavigate();
   const categories = ["Fiction", "Non-Fiction", "Science", "History", "Biography", "Fantasy"];
-
+  const recommendedByCabin = ["Yes","No"];
   useEffect(() => {
     const fetchEbookData = async () => {
       try {
@@ -43,7 +46,8 @@ function EditEbook() {
           title: ebook.bookName || "",
           author: ebook.author || "",
           description: ebook.description || "",
-          category: ebook.category || ""
+          category: ebook.category || "",
+          recommendedByCabin: ebook.recommendedByCabin || "",
         });
 
         // Set existing cover images
@@ -165,6 +169,7 @@ function EditEbook() {
     formData.append("author", ebookData.author);
     formData.append("description", ebookData.description);
     formData.append("category", ebookData.category);
+    formData.append("recommendedByCabin", ebookData.recommendedByCabin);
 
     coverImages.forEach((image) => {
       // Ensure the Base64 images are added correctly
@@ -248,6 +253,16 @@ function EditEbook() {
         onSelect={(value) => handleDropdownSelect('category', value)}
         isOpen={dropdown.category}
         toggleDropdown={() => toggleDropdown("category")}
+      />
+
+      <Dropdown
+        label="Recommended by Cabin"
+        name="recommendedByCabin"
+        options={recommendedByCabin}
+        value={ebookData.recommendedByCabin}
+        onSelect={(value) => handleDropdownSelect('recommendedByCabin', value)}
+        isOpen={dropdown.recommendedByCabin}
+        toggleDropdown={() => toggleDropdown("recommendedByCabin")}
       />
 
       <div className="mb-4">

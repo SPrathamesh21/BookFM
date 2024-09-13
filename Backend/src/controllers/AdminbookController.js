@@ -114,7 +114,7 @@ const getEbookById = async (req, res) => {
 //Update the Books
 const updateEbook = async (req, res) => {
   try {
-    const { title, author, description, category, coverImages } = req.body;
+    const { title, author, description, category, coverImages,recommendedByCabin } = req.body;
     const ebookFile = req.file; // Handle EPUB/PDF file
 
     // Validate required fields
@@ -174,7 +174,8 @@ const updateEbook = async (req, res) => {
           book.author = author;
           book.description = description;
           book.category = category;
-          book.coverImages = parsedCoverImages; // Replace cover images
+          book.coverImages = parsedCoverImages;
+          book.recommendedByCabin = recommendedByCabin; // Replace cover images
 
           // Update file information if a new one was uploaded
           if (fileId) {
@@ -202,7 +203,8 @@ const updateEbook = async (req, res) => {
       book.author = author;
       book.description = description;
       book.category = category;
-      book.coverImages = parsedCoverImages; // Replace cover images
+      book.coverImages = parsedCoverImages;
+      book.recommendedByCabin=recommendedByCabin // Replace cover images
 
       await book.save(); // Save the updated book document
       res.status(200).json({ message: 'Book updated successfully', book });
