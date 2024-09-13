@@ -16,7 +16,8 @@ const ExpandedView = () => {
   const [epubFile, setEpubFile] = useState(null);
   const [fileType, setFileType] = useState(null); 
   const { currentUser } = useContext(AuthContext);
-  
+  const [isLoading, setIsLoading] = useState(false);
+
   const blobToBase64 = (blob) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -25,8 +26,10 @@ const ExpandedView = () => {
       reader.readAsDataURL(blob);
     });
   };
+
   useEffect(() => {
     const fetchBookDetails = async () => {
+      setIsLoading(true); // Start the loader
       try {
         const response = await axios.get(`/get-book/${bookId}`);
         setBook(response.data);
@@ -57,6 +60,8 @@ const ExpandedView = () => {
         }
       } catch (error) {
         console.error('Error fetching book details:', error);
+      } finally {
+        setIsLoading(false); // Stop the loader after the operation is done
       }
     };
 
@@ -218,15 +223,23 @@ const ExpandedView = () => {
             Book Description: <span><br/></span>{book.description}
           </p>
           <p className="text-base md:text-lg text-gray-600 mb-5">Usual time to read: 5 hours</p>
-          <button 
-            className={`mt-4 md:mt-5 py-2 px-4 bg-blue-500 text-white rounded-lg font-bold text-lg flex items-center justify-center transition-transform duration-300 ${isReadHover ? 'bg-blue-700 transform scale-105' : ''} w-full md:w-auto`}
-            onClick={addToLibrary}
-            onMouseEnter={() => setIsReadHover(true)}
-            onMouseLeave={() => setIsReadHover(false)}
-          >
-            <FaBookOpen size={20} className="mr-2" />
-            Read
-          </button>
+          <button
+  className={`mt-4 md:mt-5 py-2 px-4 bg-blue-500 text-white rounded-lg font-bold text-lg flex items-center justify-center transition-transform duration-300 ${isReadHover ? 'bg-blue-700 transform scale-105' : ''} w-full md:w-auto ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+  onClick={addToLibrary}
+  onMouseEnter={() => setIsReadHover(true)}
+  onMouseLeave={() => setIsReadHover(false)}
+  disabled={isLoading} // Disable button while loading
+>
+  {isLoading ? (
+    <div className="w-6 h-6 border-4 border-t-4 border-white border-opacity-30 border-t-blue-500 rounded-full animate-spin" />
+  ) : (
+    <>
+      <FaBookOpen size={20} className="mr-2" />
+      Read
+    </>
+  )}
+</button>
+
 
         </div>
       </div>
