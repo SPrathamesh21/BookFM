@@ -47,7 +47,7 @@ const EpubViewerComponent = ({ file, bookId }) => {
   useEffect(() => {
     const fetchAnnotations = async () => {
       try {
-        const response = await axios.get(`/annotations/${bookId}`);
+        const response = await axios.get(`/annotations/${currentUser?.userId}/${bookId}`);
   
         if (response.status === 200 && response.data) {
           const { highlights, notes } = response.data;
@@ -81,7 +81,7 @@ const EpubViewerComponent = ({ file, bookId }) => {
     };
   
     fetchAnnotations();
-  }, [bookId]);
+  }, [bookId, currentUser?.userId]);
 
   const handleFontSizeChange = (increment) => {
     const newSize = fontSize + increment;
