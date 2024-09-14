@@ -13,8 +13,6 @@ const ExpandedView = () => {
   const [isReadHover, setIsReadHover] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [activeHearts, setActiveHearts] = useState({});
-  const [epubFile, setEpubFile] = useState(null);
-  const [fileType, setFileType] = useState(null); 
   const { currentUser } = useContext(AuthContext);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -236,8 +234,6 @@ const ExpandedView = () => {
               </>
             )}
           </button>
-
-
         </div>
       </div>
     </div>

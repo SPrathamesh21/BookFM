@@ -14,7 +14,7 @@ const PdfAnnotationSchema = new mongoose.Schema({
             height: Number
           },
           color: String,
-          text: String // Text selected for the highlight
+          text: String,
         }
       ],
       notes: [

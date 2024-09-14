@@ -26,7 +26,12 @@ const EpubViewerComponent = ({ file, bookId }) => {
   const [flashCardNotes, setFlashCardNotes] = useState(new Map());
   const [flashCardSelections, setFlashCardSelections] = useState(new Map());
   const flashCardRef = useRef(null);
+  const [currentPage, setCurrentPage] = useState(null);
+  const [locationState, setLocationState] = useState(
+    localStorage.getItem(`reader-location-${bookId}`) || 0
+  );
   
+  const tocRef = useRef([]);
   useEffect(() => {
     if (file && typeof file === 'string' && file.startsWith('blob:')) {
       fetch(file)
@@ -43,6 +48,14 @@ const EpubViewerComponent = ({ file, bookId }) => {
       console.error('File is not a Blob. Ensure the file passed is of type Blob or File.');
     }
   }, [file]);
+
+  useEffect(() => {
+    if (locationState && fileData) {
+      const bookKey = `reader-location-${bookId}`;
+      localStorage.setItem(bookKey, locationState);
+    }
+  }, [locationState, fileData]);
+  
 
   useEffect(() => {
     const fetchAnnotations = async () => {
@@ -295,7 +308,14 @@ const EpubViewerComponent = ({ file, bookId }) => {
     tocArea: {
       ...ReactReaderStyle.tocArea,
       backgroundColor: 'gray',
-      color: "white"
+      color: "white",
+      
+    },
+    tocButtonExpanded: {
+      ...ReactReaderStyle.tocButtonExpanded,
+      background: 'gray',
+      color: 'white',
+      zIndex: '999px'
     },
     reader: {
       ...ReactReaderStyle.reader,
@@ -363,25 +383,63 @@ const EpubViewerComponent = ({ file, bookId }) => {
       </div>
 
       {fileData && (
-        <div className="w-full h-[80vh] md:h-4/5  relative rounded-lg overflow-hidden">
+        <div className="w-full h-[80vh] md:h-4/5 relative rounded-lg overflow-hidden">
+        {/* Container for ReactReader and current page number */}
+        <div className="relative w-full h-full">
           <ReactReader
             url={fileData}
-            location={location}
-            locationChanged={locationChanged}
+            location={locationState}
+            locationChanged={(loc) => {
+              locationChanged(loc);
+              setLocationState(loc);
+      
+              if (renditionRef.current && tocRef.current) {
+                const { displayed, href } = renditionRef.current.location.start;
+                const chapter = tocRef.current.find((item) => item.href === href);
+                setCurrentPage(
+                  `Page ${displayed.page} of ${displayed.total} in chapter ${
+                    chapter ? chapter.label : 'n/a'
+                  }`
+                );
+              }
+            }}
             readerStyles={customReaderStyles}
             getRendition={(rendition) => {
               renditionRef.current = rendition;
               rendition.themes.fontSize(`${fontSize}px`);
+      
               // Register themes with cleaner background and text colors
               rendition.themes.register('light', { body: { background: '#fdfdfd', color: '#333' } });
               rendition.themes.register('dark', { body: { background: '#1a1a1a', color: '#d3d3d3' } });
               rendition.themes.register('sepia', { body: { background: '#f4ecd8', color: '#5b4636' } });
+      
               handleThemeChange(theme); // Apply chosen theme
               reapplyHighlights(); // Reapply highlights after location change
+      
+              // Listen for Table of Contents changes
+              rendition.on('relocated', (location) => {
+                const { displayed, href } = rendition.location.start;
+                const chapter = tocRef.current.find((item) => item.href === href);
+                setCurrentPage(
+                  `Page ${displayed.page} of ${displayed.total} in chapter ${
+                    chapter ? chapter.label : 'n/a'
+                  }`
+                );
+              });
             }}
+            tocChanged={(toc) => (tocRef.current = toc)}
             onError={(error) => console.error('ReactReader Error:', error)}
           />
+      
+          {/* Display current page number at top-right */}
+          {currentPage && (
+            <div className="absolute top-2 right-4 p-2 px-4 flex-grow rounded text-white z-10">
+              {currentPage}
+            </div>
+          )}
         </div>
+      </div>
+      
       )}
 
       {showColorPicker && (
