@@ -16,6 +16,21 @@ const ExpandedView = () => {
   const { currentUser } = useContext(AuthContext);
   const [isLoading, setIsLoading] = useState(false);
 
+
+  // Helper function to calculate reading time
+  const calculateReadingTime = (wordCount) => {
+    const wordsPerMinute = 200; // You can adjust the reading speed if needed
+    const totalMinutes = Math.ceil(wordCount / wordsPerMinute);
+
+    if (totalMinutes >= 60) {
+      const hours = Math.floor(totalMinutes / 60);
+      const minutes = totalMinutes % 60;
+      return `${hours} hr ${minutes > 0 ? `${minutes} mins` : ""}`.trim();
+    }
+    return `${totalMinutes} mins`;
+  };
+
+
   const blobToBase64 = (blob) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -62,8 +77,8 @@ const ExpandedView = () => {
 
     fetchBookDetails();
   }, [bookId]);
-  
-  
+
+
   useEffect(() => {
     if (book && book.coverImages.length > 1) {
       const interval = setInterval(() => {
@@ -87,8 +102,8 @@ const ExpandedView = () => {
         text: `Check out this book: ${book?.bookName || 'Book Name'}!`,
         url: url,
       })
-      .then(() => console.log('Successful share'))
-      .catch((error) => console.log('Error sharing:', error));
+        .then(() => console.log('Successful share'))
+        .catch((error) => console.log('Error sharing:', error));
     } else {
       alert('Sharing not supported on this browser.');
     }
@@ -118,7 +133,7 @@ const ExpandedView = () => {
       alert('Failed to add book to library.');
     }
   };
-  
+
   useEffect(() => {
     if (currentUser) {
       const fetchFavorites = async () => {
@@ -145,7 +160,7 @@ const ExpandedView = () => {
         [bookId]: isFavorite,
       }));
 
-      const response = isFavorite 
+      const response = isFavorite
         ? await axios.post('/add-favorite', { userId: currentUser.userId, bookId })
         : await axios.post('/remove-favorite', { userId: currentUser.userId, bookId });
 
@@ -162,7 +177,7 @@ const ExpandedView = () => {
 
   return (
     <div className="relative flex flex-col md:flex-row p-6 md:p-8 rounded-xl bg-gradient-to-r from-gray-100 to-white max-w-4xl mx-auto my-5 shadow-lg transform transition-transform ease-linear cursor-pointer overflow-hidden">
-      <button 
+      <button
         className={`fixed top-5 right-5 bg-blue-500 text-white rounded-full w-12 h-12 z-10 flex items-center justify-center cursor-pointer shadow-md transition-colors duration-300 ${isHover ? 'bg-blue-700 shadow-lg' : ''}`}
         onClick={handleShare}
         onMouseEnter={() => setIsHover(true)}
@@ -175,10 +190,10 @@ const ExpandedView = () => {
       {/* Main image display */}
       <div className="w-full md:w-1/3 h-96 rounded-xl overflow-hidden relative">
         {book.coverImages && book.coverImages.map((image, index) => (
-          <img 
+          <img
             key={index}
-            src={image} 
-            alt={`${book.bookName} cover ${index + 1}`} 
+            src={image}
+            alt={`${book.bookName} cover ${index + 1}`}
             className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out ${index === currentImageIndex ? 'opacity-100' : 'opacity-0'}`}
             onError={() => console.error(`Failed to load image: ${image}`)}
           />
@@ -197,10 +212,10 @@ const ExpandedView = () => {
         {/* Thumbnail carousel */}
         <div className="flex mt-4 md:mt-0">
           {book.coverImages && book.coverImages.map((image, index) => (
-            <img 
+            <img
               key={index}
-              src={image} 
-              alt={`${book.bookName} thumbnail ${index + 1}`} 
+              src={image}
+              alt={`${book.bookName} thumbnail ${index + 1}`}
               className={`w-16 h-16 md:w-20 md:h-20 rounded-lg object-cover m-1 cursor-pointer transition-opacity duration-300 ${index === currentImageIndex ? 'opacity-100' : 'opacity-50'}`}
               onClick={() => handleThumbnailClick(index)}
               onError={() => console.error(`Failed to load thumbnail: ${image}`)}
@@ -215,9 +230,14 @@ const ExpandedView = () => {
           </h2>
           <h4 className="text-xl md:text-2xl italic mb-4 text-gray-600">by {book.author}          </h4>
           <p className="text-base md:text-lg mb-5 text-gray-700 leading-relaxed max-h-32 overflow-y-auto">
-            Book Description: <span><br/></span>{book.description}
+            Book Description: <span><br /></span>{book.description}
           </p>
-          <p className="text-base md:text-lg text-gray-600 mb-5">Usual time to read: 5 hours</p>
+          
+          {book.wordCount > 0 && (
+            <p className="text-base md:text-lg text-gray-600 mb-5">
+              Usual time to read: {calculateReadingTime(book.wordCount)}
+            </p>
+          )}
           <button
             className={`mt-4 md:mt-5 py-2 px-4 bg-blue-500 text-white rounded-lg font-bold text-lg flex items-center justify-center transition-transform duration-300 ${isReadHover ? 'bg-blue-700 transform scale-105' : ''} w-full md:w-auto ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
             onClick={addToLibrary}

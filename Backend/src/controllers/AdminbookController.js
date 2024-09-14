@@ -6,6 +6,63 @@ const Book = require('../models/AdminbookModel');
 const moment = require('moment-timezone');
 const Notification =require('../models/AdminNotification');
 const User = require('../models/User');
+const PDFParser = require('pdf-parse');
+const EPUB = require('epub'); // Import the epub library
+
+
+// Function to count words in a text
+const countWords = (text) => {
+  return text.split(/\s+/).filter(Boolean).length;
+};
+
+// Function to extract text from PDF
+const extractTextFromPDF = async (pdfBuffer) => {
+  const data = await PDFParser(pdfBuffer);
+  return data.text;
+};
+
+// Function to extract text from epub
+const extractTextFromEPUB = async (epubBuffer) => {
+  return new Promise((resolve, reject) => {
+    const epubFilePath = path.join(__dirname, 'temp.epub');
+
+    // Write the buffer to a temporary EPUB file
+    fs.writeFileSync(epubFilePath, epubBuffer);
+
+    // Parse the EPUB file
+    const epub = new EPUB(epubFilePath);
+    epub.on('end', async () => {
+      let extractedText = '';
+
+      // Array of promises to handle each chapter text extraction
+      const chapterPromises = epub.flow.map((chapter) => {
+        return new Promise((chapterResolve, chapterReject) => {
+          epub.getChapter(chapter.id, (err, text) => {
+            if (err) {
+              return chapterReject(err);
+            }
+            extractedText += text; // Append chapter text
+            chapterResolve();
+          });
+        });
+      });
+
+      // Wait for all chapter text to be extracted
+      await Promise.all(chapterPromises);
+
+      // Clean up and remove the temporary EPUB file
+      fs.unlinkSync(epubFilePath);
+
+      resolve(extractedText); // Resolve the full extracted text
+    });
+
+    epub.on('error', (error) => {
+      reject(error);
+    });
+
+    epub.parse(); // Start parsing the EPUB file
+  });
+};
 
 
 //add books 
@@ -20,6 +77,16 @@ const addBook = async (req, res) => {
       return res.status(400).json({ error: 'All fields are required' });
     }
 
+    let wordCount = 0;
+
+    // Extract text and count words based on file type
+    if (bookFile.mimetype === 'application/pdf') {
+      const text = await extractTextFromPDF(bookFile.buffer);
+      wordCount = countWords(text);
+    } else if (bookFile.mimetype === 'application/epub+zip') {
+      const text = await extractTextFromEPUB(bookFile.buffer);
+      wordCount = countWords(text);
+    }
     
 
     // Handle file upload to GridFS
@@ -42,7 +109,9 @@ const newBook = new Book({
   dateAdded: currentISTTime, // Use formatted IST time
   coverImages,
   recommendedByCabin,
-  EPUBbase64: { id: undefined, filename: undefined } // Ensure EPUBbase64 is updated later
+  EPUBbase64: { id: undefined, filename: undefined }, // Ensure EPUBbase64 is updated later
+  wordCount // Add word count to the document
+
 });
 
     // Wait for file upload to complete
@@ -143,9 +212,9 @@ const updateEbook = async (req, res) => {
 
     const bucket = new GridFSBucket(mongoose.connection.db, {
       bucketName: 'epubs',
-      chunkSizeBytes: 13 * 1024 * 1024,
+      chunkSizeBytes: 1 * 1024 * 1024,
     });
-
+    
     if (ebookFile) {
       if (ebookFile.mimetype === 'application/epub+zip' || ebookFile.mimetype === 'application/pdf') {
         // Delete old file from GridFS if it exists and is valid
@@ -169,6 +238,17 @@ const updateEbook = async (req, res) => {
           fileId = uploadStream.id; // Get the ID of the uploaded file
           fileType = ebookFile.mimetype;
 
+          let wordCount = 0;
+
+          // Count words based on file type
+          if (fileType === 'application/pdf') {
+            const text = await extractTextFromPDF(ebookFile.buffer);
+            wordCount = countWords(text);
+          } else if (fileType === 'application/epub+zip') {
+            const text = await extractTextFromEPUB(ebookFile.buffer);
+            wordCount = countWords(text);
+          }
+
           // Update book details
           book.bookName = title;
           book.author = author;
@@ -176,6 +256,7 @@ const updateEbook = async (req, res) => {
           book.category = category;
           book.coverImages = parsedCoverImages;
           book.recommendedByCabin = recommendedByCabin; // Replace cover images
+          book.wordCount = wordCount;
 
           // Update file information if a new one was uploaded
           if (fileId) {

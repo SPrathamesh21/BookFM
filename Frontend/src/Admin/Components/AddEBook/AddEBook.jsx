@@ -60,6 +60,12 @@ function AddBook() {
     }
   };
 
+   // Trigger file input click
+   const handleButtonClick = () => {
+    document.getElementById('fileInput').click();
+  };
+
+
    // Convert file to Base64
    const convertFileToBase64 = (file) => {
     return new Promise((resolve, reject) => {
@@ -307,19 +313,31 @@ function AddBook() {
 
 
       <div className="mb-4">
-        <label className="block text-black text-xl font-bold mb-2">Upload EPUB/PDF</label>
-        <input
-          type="file"
-          accept=".epub,.pdf"
-          onChange={handleFileChange}
-          className="w-full py-2 px-3 border rounded"
-        />
-        {fileName && (
-          <div className="mt-2">
-            <p className="text-black text-lg">Selected EPUB: {fileName}</p>
-          </div>
-        )}
-      </div>
+      <label className="block text-black text-xl font-bold mb-2">Upload EPUB/PDF</label>
+      
+      {/* Hidden File Input */}
+      <input
+        type="file"
+        id="fileInput"
+        accept=".epub,.pdf"
+        onChange={handleFileChange}
+        style={{ display: 'none' }} // Hides the input element
+      />
+      
+      {/* Button to trigger file input */}
+      <button 
+        type="button"
+        onClick={handleButtonClick}
+        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+        Select File
+      </button>
+      
+      {fileName && (
+        <div className="mt-2">
+          <p className="text-black text-lg">Selected File: {fileName}</p>
+        </div>
+      )}
+    </div>
 
       {/* New field for "Recommended by Cabin" */}
       <div className="mb-4 relative">

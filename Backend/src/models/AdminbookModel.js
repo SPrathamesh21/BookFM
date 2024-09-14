@@ -13,7 +13,9 @@ const bookSchema = new mongoose.Schema({
     id: { type: mongoose.Schema.Types.ObjectId, ref: 'epubs', required: true }, 
     filename: { type: String, required: true } 
   },
-  count: { type: Number, default: 0 } 
+  count: { type: Number, default: 0 },
+  wordCount: { type: Number, default: 0 } // Field to store word count
+
 });
 
 const Book = mongoose.model('Book', bookSchema);
