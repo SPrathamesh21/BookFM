@@ -29,6 +29,8 @@ const PdfViewer = ({ file, bookId }) => {
   const selectionTimeout = useRef(null);
   const [highlightApplied, setHighlightApplied] = useState(false);
   const [postAnnotations, setPostAnnotations] = useState([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
 
 
   const [selectedWord, setSelectedWord] = useState('');
@@ -36,7 +38,38 @@ const PdfViewer = ({ file, bookId }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
 
+// Function to handle search term input
+const handleSearchChange = (e) => {
+  setSearchTerm(e.target.value);
+};
 
+// Function to perform search and store results
+const performSearch = async () => {
+  if (!file || !searchTerm) return;
+
+  // Assuming you have a PDF loading library setup that can perform text search
+  // This is an example using `pdfjs-dist` for searching text
+  const pdf = await pdfjs.getDocument(file).promise;
+  let results = [];
+
+  for (let i = 1; i <= numPages; i++) {
+    const page = await pdf.getPage(i);
+    const textContent = await page.getTextContent();
+    const text = textContent.items.map(item => item.str).join(' ');
+
+    if (text.includes(searchTerm)) {
+      results.push({ pageNumber: i, text: text.substring(text.indexOf(searchTerm), text.indexOf(searchTerm) + 100) });
+    }
+  }
+  
+  setSearchResults(results);
+};
+
+// Handle search results click
+const handleResultClick = (pageNumber) => {
+  setPageNumber(pageNumber);
+  setShowFlashCards(false); // Assuming you want to close flashcards panel when searching
+};
   const fetchDefinition = async (word) => {
     try {
       const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
@@ -393,6 +426,43 @@ const PdfViewer = ({ file, bookId }) => {
     <div className={`min-h-screen ${theme === 'dark' ? 'bg-gray-900 text-white' : theme === 'sepia' ? 'bg-[#f4ecd8] text-black' : 'bg-gray-100 text-black'} transition-colors duration-300`}>
 
       <div className="flex flex-row justify-between items-center p-4 bg-white shadow-md rounded-lg w-full mx-auto flex-nowrap">
+      <div className="relative w-full md:w-auto">
+  {/* Search Field */}
+  <div className="flex items-center space-x-2 md:space-x-4 w-full">
+    <input
+      type="text"
+      value={searchTerm}
+      onChange={(e) => {
+        handleSearchChange(e); // Trigger search as user types
+        performSearch(); // Call search function dynamically
+      }}
+      placeholder="Search..."
+      className="px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm w-full md:w-64"
+    />
+  </div>
+
+  {/* Search Results Dropdown */}
+  {searchResults.length > 0 && (
+    <div className="absolute mt-1 z-30 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+      <ul>
+        {searchResults.map((result, index) => (
+          <li
+            key={index}
+            className="p-2 hover:bg-gray-100 cursor-pointer border-b"
+            onClick={() => {
+              handleResultClick(result.pageNumber);
+              setSearchResults([]); // Close dropdown after selecting a result
+            }}
+          >
+            <p className="font-semibold">Page {result.pageNumber}</p>
+            <p>{result.text}...</p>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )}
+</div>
+
         {/* Font Size Controls
         <div className="flex items-center space-x-4">
           <button 
