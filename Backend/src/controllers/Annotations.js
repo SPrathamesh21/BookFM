@@ -41,7 +41,7 @@ exports.saveAnnotations = async (req, res) => {
 // Get highlights and notes for a specific book
 exports.getAnnotations = async (req, res) => {
   const { bookId, userId } = req.params;
-
+  // console.log('bookid', bookId, userId)
   try {
     // Retrieve annotations for the specified book
     const annotations = await Annotation.findOne({ bookId, userId });

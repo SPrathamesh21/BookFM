@@ -30,7 +30,7 @@ const EpubViewerComponent = ({ file, bookId }) => {
   const [locationState, setLocationState] = useState(
     localStorage.getItem(`reader-location-${bookId}`) || 0
   );
-  
+  const noteIconRef = useRef(null);
   const tocRef = useRef([]);
   useEffect(() => {
     if (file && typeof file === 'string' && file.startsWith('blob:')) {
@@ -72,8 +72,9 @@ const EpubViewerComponent = ({ file, bookId }) => {
             .map(note => [note.cfiRange, note.content]);
   
           const filteredSelections = highlights
+            .filter(highlight => highlight.selectedText && highlight.selectedText.trim() !== '') // Exclude empty selected texts
             .map(highlight => [highlight.cfiRange, highlight.selectedText || '']);
-  
+            
           setNotes(new Map(filteredNotes));
           setFlashCardNotes(new Map(filteredNotes));
           setFlashCardSelections(new Map(filteredSelections));
@@ -327,7 +328,25 @@ const EpubViewerComponent = ({ file, bookId }) => {
       margin: '0px'
     }
   };
-  
+
+  function handleClickOutside(event) {
+    if (noteIconRef.current && !noteIconRef.current.contains(event.target)) {
+      setShowNoteIcon(false);
+    }
+  }
+
+  useEffect(() => {
+    if (showNoteIcon) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showNoteIcon]);
+
   return (
     <div className="flex flex-col items-center justify-center h-screen p-4 bg-gray-100">
       <div className="flex flex-row justify-between items-center p-4 bg-white shadow-md rounded-lg mb-4 w-full mx-auto flex-nowrap">
@@ -392,7 +411,6 @@ const EpubViewerComponent = ({ file, bookId }) => {
             locationChanged={(loc) => {
               locationChanged(loc);
               setLocationState(loc);
-      
               if (renditionRef.current && tocRef.current) {
                 const { displayed, href } = renditionRef.current.location.start;
                 const chapter = tocRef.current.find((item) => item.href === href);
@@ -439,7 +457,6 @@ const EpubViewerComponent = ({ file, bookId }) => {
           )}
         </div>
       </div>
-      
       )}
 
       {showColorPicker && (
@@ -479,13 +496,16 @@ const EpubViewerComponent = ({ file, bookId }) => {
 
       {showNoteIcon && (
         <div className="fixed inset-0 flex items-center justify-center z-50">
-          <div className="p-2 bg-yellow-200 shadow-lg rounded-lg flex items-center space-x-4">
+          <div
+            ref={noteIconRef}
+            className="p-2 bg-yellow-200 shadow-lg rounded-lg flex items-center space-x-4"
+          >
             <FaPen
               onClick={addNote}
               className="cursor-pointer text-gray-500"
             />
             <FaTimes
-              onClick={() => setShowNoteIcon(false)} 
+              onClick={() => setShowNoteIcon(false)}
               className="cursor-pointer text-red-500"
             />
           </div>
@@ -521,57 +541,54 @@ const EpubViewerComponent = ({ file, bookId }) => {
       )}
 
       {showFlashCards && (
-        <div ref={flashCardRef}  className={`fixed inset-y-0 right-0 z-50 w-96 bg-white shadow-md overflow-auto p-4 transform transition-transform duration-300 ease-in-out ${showFlashCards ? 'translate-x-0' : 'translate-x-full'} rounded-lg`}>
-          <div className="flex justify-between items-center mb-4 border-b border-gray-300 pb-2">
-            <h2 className="text-xl font-bold text-gray-900 flex items-center">
-              <FaBookOpen className="mr-2 text-gray-600" />
-              Flash Cards
-            </h2>
-            <button 
-              onClick={() => setShowFlashCards(false)} 
-              className="text-gray-600 hover:text-gray-800 focus:outline-none"
-            >
-              <FaTimes className="w-5 h-5" />
-            </button>
-          </div>
-          <ul className="space-y-4">
-            {Array.from(flashCardSelections.entries()).map(([cfiRange, selectedText]) => (
-              <li 
-                key={cfiRange} 
-                className="p-5 bg-gray-50 rounded-lg border border-gray-200 shadow-md hover:shadow-lg cursor-pointer transition-shadow duration-150"
-                onClick={() => {
+        <>
+          <div className="fixed inset-0 bg-black bg-opacity-10 z-40 transition-opacity duration-300 ease-in-out"></div>
+          <div
+            ref={flashCardRef}
+            className={`fixed inset-y-0 right-0 z-50 w-96 bg-white shadow-md overflow-auto p-4 rounded-lg transform transition-transform duration-500 ease-in-out ${showFlashCards ? 'translate-x-0' : 'translate-x-full'}`}
+          >
+            <div className="flex justify-between items-center mb-4 border-b border-gray-300 pb-2">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center">
+                <FaBookOpen className="mr-2 text-gray-600" />
+                Flash Cards
+              </h2>
+              <button onClick={() => setShowFlashCards(false)} className="text-gray-600 hover:text-gray-800 focus:outline-none">
+                <FaTimes className="w-5 h-5" />
+              </button>
+            </div>
+            <ul className="space-y-4">
+              {Array.from(flashCardSelections.entries()).map(([cfiRange, selectedText]) => (
+                <li key={cfiRange} className="p-5 bg-gray-50 rounded-lg border border-gray-200 shadow-md hover:shadow-lg cursor-pointer transition-shadow duration-150" onClick={() => {
                   setLocation(cfiRange); // Navigate to the selected text
                   setShowFlashCards(false); // Close flashcards
-                }}
-              >
-                <div className="mb-3">
-                  <div className="text-blue-600 font-semibold flex items-center">
-                    <FaRegFileAlt className="mr-2" />
-                    Selected text:
-                  </div>
-                  <div className="text-gray-900">{truncateText(selectedText)}</div>
-                </div>
-                {flashCardNotes.get(cfiRange) && (
-                  <div>
-                    <div className="text-yellow-600 font-semibold flex items-center">
-                      <FaStickyNote className="mr-2" />
-                      Note:
+                }}>
+                  <div className="mb-3">
+                    <div className="text-blue-600 font-semibold flex items-center">
+                      <FaRegFileAlt className="mr-2" />
+                      Selected text:
                     </div>
-                    <div className="text-gray-900">{flashCardNotes.get(cfiRange)}</div>
+                    <div className="text-gray-900">{truncateText(selectedText)}</div>
                   </div>
-                )}
-              </li>
-            ))}
-          </ul>
-          <button 
-            onClick={() => setShowFlashCards(false)} 
-            className="mt-6 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-150 flex items-center justify-center"
-          >
-            <FaChevronRight className="mr-2" />
-            Close Flash Cards
-          </button>
-        </div>
+                  {flashCardNotes.get(cfiRange) && (
+                    <div>
+                      <div className="text-yellow-600 font-semibold flex items-center">
+                        <FaStickyNote className="mr-2" />
+                        Note:
+                      </div>
+                      <div className="text-gray-900">{flashCardNotes.get(cfiRange)}</div>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+            <button onClick={() => setShowFlashCards(false)} className="mt-6 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-150 flex items-center justify-center">
+              <FaChevronRight className="mr-2" />
+              Close Flash Cards
+            </button>
+          </div>
+        </>
       )}
+
     </div>
   );
 };

@@ -206,14 +206,17 @@ function Home() {
             Start Reading
           </button>
         </section>
-
-        {/* User's Library Carousel */}
-        <div ref={ref}>
-          {inView && (
-            <Suspense fallback={<div>Loading carousel...</div>}>
-              <BookCarousel books={userLibrary} title="Your Library" />
-            </Suspense>
-          )}
+   
+        <div className="flex items-center justify-between">
+          <Suspense fallback={<div>Loading carousel...</div>}>
+            <BookCarousel books={userLibrary.slice(0, 5)} title="Your Library" />
+          </Suspense>
+            <a
+              onClick={() => navigate('/yourlibrary')}
+              className="text-teal-400 hover:underline text-lg font-semibold cursor-pointer"
+            >
+              See All
+            </a>
         </div>
 
         {/* Favorites Carousel */}
