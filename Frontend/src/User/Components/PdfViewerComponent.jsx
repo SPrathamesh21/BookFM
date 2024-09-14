@@ -457,6 +457,7 @@ const PdfViewer = ({ file, bookId }) => {
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 rows={4}
+                placeholder="If you don't want to make notes simply CLICK ON SAVE BUTTON"
                 className="w-full p-2 border border-gray-300 rounded mb-4"
               />
               <div className="flex justify-end">
