@@ -2,13 +2,14 @@ const Annotation = require('../models/PdfAnnotation');
 
 // Save annotations (both highlights and notes)
 const saveAnnotations = async (req, res) => {
+ 
   const { userId, bookId, highlights, postAnnotations } = req.body;
   // Flatten the highlights object if needed
   const flattenedHighlights = Object.values(highlights).flat();
 
   try {
       const existingAnnotation = await Annotation.findOne({ userId, bookId });
-
+     
       if (existingAnnotation) {
           // Check if there are existing highlights and notes for this bookId and userId
           const currentAnnotation = existingAnnotation.annotations.find(annotation => {
@@ -25,6 +26,7 @@ const saveAnnotations = async (req, res) => {
           }
 
           await existingAnnotation.save();
+          
           res.status(200).json(existingAnnotation);
       } else {
           // Create new annotation if no entry found for this userId and bookId

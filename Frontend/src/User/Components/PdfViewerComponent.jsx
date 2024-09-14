@@ -202,6 +202,8 @@ const PdfViewer = ({ file, bookId }) => {
   };
   
 
+  
+
 
   const renderHighlights = () => {
     return (
@@ -314,6 +316,16 @@ const PdfViewer = ({ file, bookId }) => {
     setTheme(newTheme);
   };
 
+
+  const handleCancel = () => {
+    // Clear the current text selection
+    window.getSelection().removeAllRanges();
+  
+    // Close the color modal
+    setShowColorModal(false);
+  };
+
+
   return (
     <div className={`min-h-screen ${theme === 'dark' ? 'bg-gray-900 text-white' : theme === 'sepia' ? 'bg-[#f4ecd8] text-black' : 'bg-gray-100 text-black'} transition-colors duration-300`}>
 
@@ -395,41 +407,43 @@ const PdfViewer = ({ file, bookId }) => {
 
           {renderHighlights()}
         </div>
-
+       
+       
         {showColorModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-gray-100 p-4 rounded-md shadow-lg w-full max-w-xs md:max-w-md lg:max-w-1/3 mx-4">
-              <h2 className="text-lg font-bold mb-4 text-center">Select Highlight Color</h2>
-              <div className="flex justify-center space-x-2 md:space-x-4">
-                {['yellow', 'green', 'blue', 'purple', 'red'].map(color => (
-                  <button
-                    key={color}
-                    className={`w-8 h-8 md:w-10 md:h-10 rounded-full border-2 ${color === selectedColor ? 'border-black' : 'border-transparent'}`}
-                    style={{ backgroundColor: color }}
-                    onClick={() => setSelectedColor(color)}
-                  />
-                ))}
-              </div>
-              <div className="flex justify-end mt-4">
-                <button
-                  className="px-3 py-1 md:px-4 md:py-2 bg-blue-500 text-white rounded mr-2"
-                  onClick={() => {
-                    applyHighlight();
-                    setShowColorModal(false);
-                  }}
-                >
-                  Highlight
-                </button>
-                <button
-                  className="px-3 py-1 md:px-4 md:py-2 bg-gray-500 text-white rounded"
-                  onClick={() => setShowColorModal(false)}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="bg-gray-100 p-4 rounded-md shadow-lg w-full max-w-xs md:max-w-md lg:max-w-1/3 mx-4">
+      <h2 className="text-lg font-bold mb-4 text-center">Select Highlight Color</h2>
+      <div className="flex justify-center space-x-2 md:space-x-4">
+        {['yellow', 'green', 'blue', 'purple', 'red'].map(color => (
+          <button
+            key={color}
+            className={`w-8 h-8 md:w-10 md:h-10 rounded-full border-2 ${color === selectedColor ? 'border-black' : 'border-transparent'}`}
+            style={{ backgroundColor: color }}
+            onClick={() => setSelectedColor(color)}
+          />
+        ))}
+      </div>
+      <div className="flex justify-end mt-4">
+        <button
+          className="px-3 py-1 md:px-4 md:py-2 bg-blue-500 text-white rounded mr-2"
+          onClick={() => {
+            applyHighlight();
+            setShowColorModal(false);
+          }}
+        >
+          Highlight
+        </button>
+        <button
+          className="px-3 py-1 md:px-4 md:py-2 bg-gray-500 text-white rounded"
+          onClick={handleCancel} // Call the handleCancel function here
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
 
 
         {noteModalOpen && (
@@ -470,64 +484,55 @@ const PdfViewer = ({ file, bookId }) => {
         >
           {/* Flashcards Panel */}
           <div
-            className="relative bg-white md:w-[450px] w-[280px] p-4 h-full shadow-2xl overflow-auto"
-            onClick={(e) => e.stopPropagation()} // Prevent click on flashcards panel from closing
-          >
-            {/* Cross Mark (Close Button) */}
-            <FaTimes
-              className="absolute top-4 left-4 mt-2 hover:text-red-800 text-red-600 cursor-pointer"
-              onClick={() => setShowFlashCards(false)}
-            />
-            <h2 className="text-2xl font-bold mt-2 mb-4 text-gray-800 text-center">Flash Cards</h2>
-            <ul>
-              {flashcards.length > 0 ? (
-                flashcards.map((flashcard, index) => (
-                  <li
-                    key={index}
-                    className="bg-gray-100 rounded-lg shadow-md p-4 mb-4 transition-all hover:shadow-lg"
-                  >
-                    <div className="flex items-center space-x-4 mb-2">
-                      <FaRegFileAlt className="text-blue-500" />
-                      <p className="font-semibold text-gray-600">Selected text:</p>
-                    </div>
-                    <p className="italic text-gray-700">{truncateText(flashcard.text, 15, 5)}</p>
-                    <div className="flex items-center justify-between mt-2">
-                      <div className="flex space-x-2 items-center">
-                        <FaStickyNote className="text-yellow-500" />
-                        <p className="font-semibold text-gray-600">Notes:</p>
-                        <div
-                          className="cursor-pointer underline text-blue-500 hover:text-blue-700"
-                          onClick={() => {
-                            setPageNumber(flashcard.pageNumber);
-                            setShowFlashCards(false); // Close flashcards after selection
-                          }}
-                        >
-                          <div className="font-bold">{flashcard.note}</div>
-                        </div>
-                      </div>
-                      <div
-                        className="text-gray-600 cursor-pointer hover:text-gray-800"
-                        onClick={() => {
-                          setPageNumber(flashcard.pageNumber);
-                          setShowFlashCards(false); // Navigate to the selected page
-                        }}
-                      >
-                        Page: {flashcard.pageNumber}
-                      </div>
-                    </div>
-                  </li>
-                ))
-              ) : (
-                <p className="text-center text-gray-500">No flashcards available.</p>
-              )}
-            </ul>
-            <button
-              onClick={() => setShowFlashCards(false)}
-              className="px-4 py-2 bg-blue-500 text-white rounded-full mt-4 hover:bg-blue-600 transition-colors"
-            >
-              Close Flash Cards
-            </button>
+  className="relative bg-white md:w-[450px] w-[280px] p-4 h-full shadow-2xl overflow-auto"
+  onClick={(e) => e.stopPropagation()} // Prevent click on flashcards panel from closing
+>
+  {/* Cross Mark (Close Button) */}
+  <FaTimes
+    className="absolute top-4 left-4 mt-2 hover:text-red-800 text-red-600 cursor-pointer"
+    onClick={() => setShowFlashCards(false)}
+  />
+  <h2 className="text-2xl font-bold mt-2 mb-4 text-gray-800 text-center">Flash Cards</h2>
+  <ul>
+    {flashcards.length > 0 ? (
+      flashcards.map((flashcard, index) => (
+        <li
+          key={index}
+          className="bg-gray-100 rounded-lg shadow-md p-4 mb-4 transition-all hover:shadow-lg cursor-pointer"
+          onClick={() => {
+            setPageNumber(flashcard.pageNumber);  // Set the page number
+            setShowFlashCards(false);             // Close the flashcards panel
+          }}
+        >
+          <div className="flex items-center space-x-4 mb-2">
+            <FaRegFileAlt className="text-blue-500" />
+            <p className="font-semibold text-gray-600">Selected text:</p>
           </div>
+          <p className="italic text-gray-700">{truncateText(flashcard.text, 15, 5)}</p>
+          <div className="flex items-center justify-between mt-2">
+            <div className="flex space-x-2 items-center">
+              <FaStickyNote className="text-yellow-500" />
+              <p className="font-semibold text-gray-600">Notes:</p>
+              <div className="font-bold">{flashcard.note || "No notes"}</div>
+            </div>
+            <div className="text-gray-600">
+              Page: {flashcard.pageNumber}
+            </div>
+          </div>
+        </li>
+      ))
+    ) : (
+      <p className="text-center text-gray-500">No flashcards available.</p>
+    )}
+  </ul>
+  <button
+    onClick={() => setShowFlashCards(false)}
+    className="px-4 py-2 bg-blue-500 text-white rounded-full mt-4 hover:bg-blue-600 transition-colors"
+  >
+    Close Flash Cards
+  </button>
+</div>
+
         </div>
 
         <div className="flex justify-between w-full px-4 py-2 ">
