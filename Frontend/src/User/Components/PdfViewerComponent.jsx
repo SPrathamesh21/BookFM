@@ -157,26 +157,33 @@ const PdfViewer = ({ file, bookId }) => {
 
   const adjustHighlightPosition = (rect) => {
     const containerRect = pdfContainerRef.current.getBoundingClientRect();
+    
+    // Calculate the highlight's position and size as percentages
     return {
-      top: rect.top - containerRect.top + pdfContainerRef.current.scrollTop,
-      left: rect.left - containerRect.left + pdfContainerRef.current.scrollLeft,
-      width: rect.width,
-      height: rect.height,
+      top: ((rect.top - containerRect.top + pdfContainerRef.current.scrollTop) / pdfContainerRef.current.clientHeight) * 100,
+      left: ((rect.left - containerRect.left + pdfContainerRef.current.scrollLeft) / pdfContainerRef.current.clientWidth) * 100,
+      width: (rect.width / pdfContainerRef.current.clientWidth) * 100,
+      height: (rect.height / pdfContainerRef.current.clientHeight) * 100,
     };
   };
+  
 
   const applyHighlight = () => {
     const selection = window.getSelection();
     if (selection.rangeCount > 0 && selectedColor) {
       const range = selection.getRangeAt(0);
       const rects = range.getClientRects();
+      
       const highlightsForPage = Array.from(rects).map(rect => adjustHighlightPosition(rect));
+      
       const newHighlights = highlightsForPage.map(highlight => ({
         rect: highlight,
         color: selectedColor,
         text: selectedText, // Ensure this is set correctly
       }));
-      setNewHighlight(newHighlights)
+      
+      setNewHighlight(newHighlights);
+      
       setHighlights(prev => ({
         ...prev,
         [pageNumber]: [
@@ -184,28 +191,79 @@ const PdfViewer = ({ file, bookId }) => {
           ...newHighlights,
         ],
       }));
+      
       setNoteModalOpen(true);
       setSelectedColor("");
       setHighlightApplied(true);
+      
       // Clear selection after applying highlight
       window.getSelection().removeAllRanges();
     }
   };
+  
 
-  const handleMouseUp = () => {
-    if (selectionTimeout.current) {
-      clearTimeout(selectionTimeout.current);
-    }
-    selectionTimeout.current = setTimeout(() => {
-      handleTextSelection();
-    }, 200);
-  };
 
-  const handleMouseDown = () => {
-    if (selectionTimeout.current) {
-      clearTimeout(selectionTimeout.current);
-    }
+  const renderHighlights = () => {
+    return (
+      <>
+        {highlights[pageNumber]?.map((highlight, index) => {
+          if (!highlight.rect) {
+            return null; // Skip rendering this highlight
+          }
+          const pdfContainer = pdfContainerRef.current;
+  
+          // Convert percentages back to absolute positions based on current container size
+          const top = (highlight.rect.top / 100) * pdfContainer.clientHeight;
+          const left = (highlight.rect.left / 100) * pdfContainer.clientWidth;
+          const width = (highlight.rect.width / 100) * pdfContainer.clientWidth;
+          const height = (highlight.rect.height / 100) * pdfContainer.clientHeight;
+  
+          return (
+            <div
+              key={index}
+              style={{
+                position: "absolute",
+                top: `${top}px`,
+                left: `${left}px`,
+                width: `${width}px`,
+                height: `${height}px`,
+                backgroundColor: highlight.color,
+                pointerEvents: "none",
+                opacity: 0.2,
+              }}
+            />
+          );
+        })}
+        
+        {annotations.filter(annotation => annotation.pageNumber === pageNumber).map((annotation, index) => {
+          if (!annotation.rect) {
+            return null;
+          }
+          const pdfContainer = pdfContainerRef.current;
+          const top = (annotation.rect.top / 100) * pdfContainer.clientHeight;
+          const left = (annotation.rect.left / 100) * pdfContainer.clientWidth;
+  
+          return (
+            <div
+              key={index}
+              style={{
+                position: "absolute",
+                top: `${top}px`,
+                left: `${left}px`,
+                backgroundColor: 'rgba(255, 255, 0, 0.5)',
+                padding: '4px',
+                borderRadius: '4px',
+              }}
+            >
+              <p>{annotation.text}</p>
+              <p>{annotation.note}</p>
+            </div>
+          );
+        })}
+      </>
+    );
   };
+  
 
   const saveNote = () => {
     const newAnnotation = { text: selectedText, note, pageNumber };
@@ -223,55 +281,35 @@ const PdfViewer = ({ file, bookId }) => {
     setHighlightApplied(true); // Trigger saving
   };
 
-
-  const renderHighlights = () => {
-    return (
-      <>
-        {highlights[pageNumber]?.map((highlight, index) => {
-          if (!highlight.rect) {
-            return null; // Skip rendering this highlight
-          }
-          return (
-            <div
-              key={index}
-              style={{
-                position: "absolute",
-                top: highlight.rect.top,
-                left: highlight.rect.left,
-                width: highlight.rect.width,
-                height: highlight.rect.height,
-                backgroundColor: highlight.color,
-                pointerEvents: "none",
-                opacity: 0.2,
-              }}
-            />
-          );
-        })}
-        {annotations.filter(annotation => annotation.pageNumber === pageNumber).map((annotation, index) => {
-          // Make sure rect data is available
-          if (!annotation.rect) {
-            return null; // Skip rendering this annotation
-          }
-          return (
-            <div
-              key={index}
-              style={{
-                position: "absolute",
-                top: annotation.rect.top, // Ensure this is set correctly
-                left: annotation.rect.left,
-                backgroundColor: 'rgba(255, 255, 0, 0.5)', // Example styling for notes
-                padding: '4px',
-                borderRadius: '4px',
-              }}
-            >
-              <p>{annotation.text}</p>
-              <p>{annotation.note}</p>
-            </div>
-          );
-        })}
-      </>
-    );
+  const handleMouseUp = () => {
+    if (selectionTimeout.current) {
+      clearTimeout(selectionTimeout.current);
+    }
+    selectionTimeout.current = setTimeout(() => {
+      handleTextSelection();
+    }, 200);
   };
+
+  const handleMouseDown = () => {
+    if (selectionTimeout.current) {
+      clearTimeout(selectionTimeout.current);
+    }
+  };
+
+ 
+  useEffect(() => {
+    const handleResize = () => {
+      // Forces re-render on window resize to adapt highlights
+      setHighlights(prevHighlights => ({ ...prevHighlights }));
+    };
+  
+    window.addEventListener('resize', handleResize);
+    
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  
+
+  
   const handleThemeChange = (newTheme) => {
     setTheme(newTheme);
   };
