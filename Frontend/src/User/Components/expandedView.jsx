@@ -53,10 +53,7 @@ const ExpandedView = () => {
 
           // Store the file data and type in IndexedDB
           await saveFileToIndexedDB('epubFileData', base64);
-          await saveFileToIndexedDB('fileType', fileType);
-
-          setEpubFile(URL.createObjectURL(blob));
-          setFileType(fileType); // Set the dynamic file type
+          await saveFileToIndexedDB('fileType', fileType)
         }
       } catch (error) {
         console.error('Error fetching book details:', error);
