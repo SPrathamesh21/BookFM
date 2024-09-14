@@ -3,7 +3,7 @@ import { Document, Page, pdfjs } from "react-pdf";
 import "react-pdf/dist/esm/Page/AnnotationLayer.css";
 import "react-pdf/dist/esm/Page/TextLayer.css";
 import 'pdfjs-dist/web/pdf_viewer.css';
-import { FaTimes, FaStickyNote, FaBookOpen, FaPen, FaRegFileAlt,FaChevronRight,FaSun, FaMoon  } from 'react-icons/fa';
+import { FaTimes, FaStickyNote, FaBookOpen, FaPen, FaRegFileAlt, FaChevronRight, FaSun, FaMoon } from 'react-icons/fa';
 import { AuthContext } from '../../Context/authContext';
 import axios from '../../../axiosConfig';
 
@@ -28,31 +28,59 @@ const PdfViewer = ({ file, bookId }) => {
   const pdfContainerRef = useRef(null);
   const selectionTimeout = useRef(null);
   const [highlightApplied, setHighlightApplied] = useState(false);
-  const [postAnnotations, setPostAnnotations] = useState([])
+  const [postAnnotations, setPostAnnotations] = useState([]);
+
+
+  const [selectedWord, setSelectedWord] = useState('');
+  const [definition, setDefinition] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+
+
+  const fetchDefinition = async (word) => {
+    try {
+      const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+      const data = await response.json();
+      const wordDefinition = data[0]?.meanings[0]?.definitions[0]?.definition;
+
+      // Only show modal if a definition is found
+      if (wordDefinition) {
+        setDefinition(wordDefinition);
+        setIsModalOpen(true);
+      }
+    } catch (error) {
+      console.log('Error fetching definition:', error);
+    }
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setDefinition('');
+  };
 
   useEffect(() => {
     const fetchAnnotations = async () => {
       try {
         const response = await axios.get(`/pdf/annotations/${currentUser?.userId}/${bookId}`);
         const data = response.data;
-  
+
         // Transform the data into the required format
         const highlightsData = {};
         const annotationsData = [];
-  
+
         data.annotations.forEach((annotation) => {
           annotation.highlights.forEach((highlight) => {
             if (!highlight.rect) {
               return;
             }
-  
+
             // Ensure that we're mapping highlights to the correct page number from notes
             annotation.notes.forEach((note) => {
               const pageNum = note.pageNumber; // Get the page number from notes
               if (!highlightsData[pageNum]) {
                 highlightsData[pageNum] = [];
               }
-  
+
               highlightsData[pageNum].push({
                 rect: {
                   top: highlight.rect.top,
@@ -65,7 +93,7 @@ const PdfViewer = ({ file, bookId }) => {
               });
             });
           });
-  
+
           // Add notes to annotationsData
           annotationsData.push(...annotation.notes.map((note) => ({
             text: note.text,
@@ -74,10 +102,10 @@ const PdfViewer = ({ file, bookId }) => {
             rect: note.rect,
           })));
         });
-  
+
         console.log('Annotations data:', annotationsData);
         console.log('Highlights data:', highlightsData);
-  
+
         setHighlights(highlightsData);
         setAnnotations(annotationsData);
         setFlashcards(annotationsData);
@@ -85,10 +113,10 @@ const PdfViewer = ({ file, bookId }) => {
         console.error('Error fetching annotations:', error);
       }
     };
-  
+
     fetchAnnotations();
   }, [currentUser?.userId, bookId]);
-  
+
 
 
   useEffect(() => {
@@ -98,10 +126,10 @@ const PdfViewer = ({ file, bookId }) => {
           userId: currentUser?.userId,
           bookId: bookId,
           highlights: NewHighlight,
-          postAnnotations 
+          postAnnotations
         };
         await axios.post(`/pdf/annotations/${bookId}`, payload);
-        setHighlightApplied(false); 
+        setHighlightApplied(false);
       } catch (error) {
         console.error('Error saving annotations:', error);
       }
@@ -133,6 +161,31 @@ const PdfViewer = ({ file, bookId }) => {
       setPageNumber(prev => prev - 1);
     }
   };
+  const handleKeyDown = (event) => {
+    switch (event.key) {
+      case 'ArrowRight':
+        goToNextPage();
+        break;
+      case 'ArrowLeft':
+        goToPrevPage();
+        break;
+      default:
+        break;
+    }
+  };
+
+
+  useEffect(() => {
+    // Add event listener for keydown
+    window.addEventListener('keydown', handleKeyDown);
+
+    // Clean up the event listener on component unmount
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [pageNumber, numPages]); // Dependencies to re-register event listener if needed
+
+
 
   const truncateText = (text, startWordCount, endWordCount) => {
     const words = text.split(" ");
@@ -141,6 +194,11 @@ const PdfViewer = ({ file, bookId }) => {
   };
 
   const handleTextSelection = () => {
+    const selectedText = window.getSelection().toString().trim();
+    if (selectedText) {
+      setSelectedWord(selectedText);
+      fetchDefinition(selectedText);
+    }
     const selection = window.getSelection();
     if (selection.rangeCount > 0) {
       const range = selection.getRangeAt(0);
@@ -157,7 +215,7 @@ const PdfViewer = ({ file, bookId }) => {
 
   const adjustHighlightPosition = (rect) => {
     const containerRect = pdfContainerRef.current.getBoundingClientRect();
-    
+
     // Calculate the highlight's position and size as percentages
     return {
       top: ((rect.top - containerRect.top + pdfContainerRef.current.scrollTop) / pdfContainerRef.current.clientHeight) * 100,
@@ -166,24 +224,24 @@ const PdfViewer = ({ file, bookId }) => {
       height: (rect.height / pdfContainerRef.current.clientHeight) * 100,
     };
   };
-  
+
 
   const applyHighlight = () => {
     const selection = window.getSelection();
     if (selection.rangeCount > 0 && selectedColor) {
       const range = selection.getRangeAt(0);
       const rects = range.getClientRects();
-      
+
       const highlightsForPage = Array.from(rects).map(rect => adjustHighlightPosition(rect));
-      
+
       const newHighlights = highlightsForPage.map(highlight => ({
         rect: highlight,
         color: selectedColor,
         text: selectedText, // Ensure this is set correctly
       }));
-      
+
       setNewHighlight(newHighlights);
-      
+
       setHighlights(prev => ({
         ...prev,
         [pageNumber]: [
@@ -191,18 +249,18 @@ const PdfViewer = ({ file, bookId }) => {
           ...newHighlights,
         ],
       }));
-      
+
       setNoteModalOpen(true);
       setSelectedColor("");
       setHighlightApplied(true);
-      
+
       // Clear selection after applying highlight
       window.getSelection().removeAllRanges();
     }
   };
-  
 
-  
+
+
 
 
   const renderHighlights = () => {
@@ -213,13 +271,13 @@ const PdfViewer = ({ file, bookId }) => {
             return null; // Skip rendering this highlight
           }
           const pdfContainer = pdfContainerRef.current;
-  
+
           // Convert percentages back to absolute positions based on current container size
           const top = (highlight.rect.top / 100) * pdfContainer.clientHeight;
           const left = (highlight.rect.left / 100) * pdfContainer.clientWidth;
           const width = (highlight.rect.width / 100) * pdfContainer.clientWidth;
           const height = (highlight.rect.height / 100) * pdfContainer.clientHeight;
-  
+
           return (
             <div
               key={index}
@@ -236,7 +294,7 @@ const PdfViewer = ({ file, bookId }) => {
             />
           );
         })}
-        
+
         {annotations.filter(annotation => annotation.pageNumber === pageNumber).map((annotation, index) => {
           if (!annotation.rect) {
             return null;
@@ -244,7 +302,7 @@ const PdfViewer = ({ file, bookId }) => {
           const pdfContainer = pdfContainerRef.current;
           const top = (annotation.rect.top / 100) * pdfContainer.clientHeight;
           const left = (annotation.rect.left / 100) * pdfContainer.clientWidth;
-  
+
           return (
             <div
               key={index}
@@ -265,7 +323,7 @@ const PdfViewer = ({ file, bookId }) => {
       </>
     );
   };
-  
+
 
   const saveNote = () => {
     const newAnnotation = { text: selectedText, note, pageNumber };
@@ -287,7 +345,7 @@ const PdfViewer = ({ file, bookId }) => {
     if (selectionTimeout.current) {
       clearTimeout(selectionTimeout.current);
     }
-  
+
     // Using requestAnimationFrame for smoother UI updates
     requestAnimationFrame(() => {
       selectionTimeout.current = setTimeout(() => {
@@ -295,28 +353,28 @@ const PdfViewer = ({ file, bookId }) => {
       }, 50); // Reduced delay to 50ms for faster response
     });
   };
-  
+
   const handleMouseDown = () => {
     if (selectionTimeout.current) {
       clearTimeout(selectionTimeout.current);
     }
   };
-  
 
- 
+
+
   useEffect(() => {
     const handleResize = () => {
       // Forces re-render on window resize to adapt highlights
       setHighlights(prevHighlights => ({ ...prevHighlights }));
     };
-  
+
     window.addEventListener('resize', handleResize);
-    
+
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-  
 
-  
+
+
   const handleThemeChange = (newTheme) => {
     setTheme(newTheme);
   };
@@ -325,7 +383,7 @@ const PdfViewer = ({ file, bookId }) => {
   const handleCancel = () => {
     // Clear the current text selection
     window.getSelection().removeAllRanges();
-  
+
     // Close the color modal
     setShowColorModal(false);
   };
@@ -334,7 +392,7 @@ const PdfViewer = ({ file, bookId }) => {
   return (
     <div className={`min-h-screen ${theme === 'dark' ? 'bg-gray-900 text-white' : theme === 'sepia' ? 'bg-[#f4ecd8] text-black' : 'bg-gray-100 text-black'} transition-colors duration-300`}>
 
-<div className="flex flex-row justify-between items-center p-4 bg-white shadow-md rounded-lg w-full mx-auto flex-nowrap">
+      <div className="flex flex-row justify-between items-center p-4 bg-white shadow-md rounded-lg w-full mx-auto flex-nowrap">
         {/* Font Size Controls
         <div className="flex items-center space-x-4">
           <button 
@@ -351,25 +409,44 @@ const PdfViewer = ({ file, bookId }) => {
             A+
           </button>
         </div> */}
-
+<div onMouseUp={handleTextSelection}>
+      {/* Your PDF Viewer Code */}
+      
+      {isModalOpen && (
+        <div style={{
+          userSelect: 'none', /* Standard syntax */
+          WebkitUserSelect: 'none', /* Safari */
+          MozUserSelect: 'none', /* Firefox */
+          msUserSelect: 'none', /* Internet Explorer/Edge */
+        }} className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-20" >
+          <div className="bg-white p-4 rounded shadow-lg max-w-md w-full">
+            <h3 className="text-lg font-bold">{selectedWord}</h3>
+            <p>{definition}</p>
+            <button onClick={closeModal} className="mt-4 bg-blue-500 text-white py-1 px-3 rounded">
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
         {/* Theme Controls */}
         <div className="flex items-center space-x-4">
-          <button 
-            onClick={() => handleThemeChange('light')} 
+          <button
+            onClick={() => handleThemeChange('light')}
             className="px-[10px] py-[10px] md:px-4 md:py-2 bg-gray-200 text-gray-800 rounded-full shadow-sm hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-300 transition duration-150 ease-in-out flex items-center justify-center"
           >
             <FaSun className="w-5 h-5 md:mr-2" />
             <span className="hidden md:inline">Light</span>
           </button>
-          <button 
-            onClick={() => handleThemeChange('dark')} 
+          <button
+            onClick={() => handleThemeChange('dark')}
             className="px-[10px] py-[10px] md:px-4 md:py-2 bg-gray-800 text-white rounded-full shadow-sm hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500 transition duration-150 ease-in-out flex items-center justify-center"
           >
             <FaMoon className="w-5 h-5 md:mr-2" />
             <span className="hidden md:inline">Dark</span>
           </button>
-          <button 
-            onClick={() => handleThemeChange('sepia')} 
+          <button
+            onClick={() => handleThemeChange('sepia')}
             className="px-[10px] py-[10px] md:px-4 md:py-2 bg-yellow-200 text-yellow-800 rounded-full shadow-sm hover:bg-yellow-300 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition duration-150 ease-in-out flex items-center justify-center"
           >
             <FaBookOpen className="w-5 h-5 md:mr-2" />
@@ -378,14 +455,16 @@ const PdfViewer = ({ file, bookId }) => {
         </div>
 
         {/* Flashcards Toggle */}
-        <button 
-          onClick={() => setShowFlashCards(!showFlashCards)} 
+        <button
+          onClick={() => setShowFlashCards(!showFlashCards)}
           className="px-[10px] py-[10px] md:px-4 md:py-2 bg-green-500 text-white rounded-full shadow-sm hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 transition duration-150 ease-in-out flex items-center justify-center"
         >
           {showFlashCards ? <FaBookOpen className="w-5 h-5" /> : <FaStickyNote className="w-5 h-5" />}
         </button>
       </div>
 
+
+  
       <div
         className="relative flex flex-col items-center  p-4 pt-10 min-h-screen"
         onMouseDown={handleMouseDown}
@@ -405,54 +484,64 @@ const PdfViewer = ({ file, bookId }) => {
               renderTextLayer
               renderAnnotationLayer
               // Adjust these values for scaling
-              width={window.innerWidth <= 768 ? window.innerWidth * 1: Math.min(window.innerWidth * 0.7, 1200)} // Responsive scaling for mobile (95% width) // Example: 90% of the viewport width
-              
+              width={window.innerWidth <= 768 ? window.innerWidth * 1 : Math.min(window.innerWidth * 0.7, 1200)} // Responsive scaling for mobile (95% width) // Example: 90% of the viewport width
+
             />
           </Document>
 
           {renderHighlights()}
         </div>
-       
-       
+
+
         {showColorModal && (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div className="bg-gray-100 p-4 rounded-md shadow-lg w-full max-w-xs md:max-w-md lg:max-w-1/3 mx-4">
-      <h2 className="text-lg font-bold mb-4 text-center">Select Highlight Color</h2>
-      <div className="flex justify-center space-x-2 md:space-x-4">
-        {['yellow', 'green', 'blue', 'purple', 'red'].map(color => (
-          <button
-            key={color}
-            className={`w-8 h-8 md:w-10 md:h-10 rounded-full border-2 ${color === selectedColor ? 'border-black' : 'border-transparent'}`}
-            style={{ backgroundColor: color }}
-            onClick={() => setSelectedColor(color)}
-          />
-        ))}
-      </div>
-      <div className="flex justify-end mt-4">
-        <button
-          className="px-3 py-1 md:px-4 md:py-2 bg-blue-500 text-white rounded mr-2"
-          onClick={() => {
-            applyHighlight();
-            setShowColorModal(false);
-          }}
-        >
-          Highlight
-        </button>
-        <button
-          className="px-3 py-1 md:px-4 md:py-2 bg-gray-500 text-white rounded"
-          onClick={handleCancel} // Call the handleCancel function here
-        >
-          Cancel
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+          <div style={{
+            userSelect: 'none', /* Standard syntax */
+            WebkitUserSelect: 'none', /* Safari */
+            MozUserSelect: 'none', /* Firefox */
+            msUserSelect: 'none', /* Internet Explorer/Edge */
+          }} className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40">
+            <div className="bg-gray-100 p-4 rounded-md shadow-lg w-full max-w-xs md:max-w-md lg:max-w-1/3 mx-4">
+              <h2 className="text-lg font-bold mb-4 text-center">Select Highlight Color</h2>
+              <div className="flex justify-center space-x-2 md:space-x-4">
+                {['yellow', 'green', 'blue', 'purple', 'red'].map(color => (
+                  <button
+                    key={color}
+                    className={`w-8 h-8 md:w-10 md:h-10 rounded-full border-2 ${color === selectedColor ? 'border-black' : 'border-transparent'}`}
+                    style={{ backgroundColor: color }}
+                    onClick={() => setSelectedColor(color)}
+                  />
+                ))}
+              </div>
+              <div className="flex justify-end mt-4">
+                <button
+                  className="px-3 py-1 md:px-4 md:py-2 bg-blue-500 text-white rounded mr-2"
+                  onClick={() => {
+                    applyHighlight();
+                    setShowColorModal(false);
+                  }}
+                >
+                  Highlight
+                </button>
+                <button
+                  className="px-3 py-1 md:px-4 md:py-2 bg-gray-500 text-white rounded"
+                  onClick={handleCancel} // Call the handleCancel function here
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
 
 
         {noteModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div style={{
+            userSelect: 'none', /* Standard syntax */
+            WebkitUserSelect: 'none', /* Safari */
+            MozUserSelect: 'none', /* Firefox */
+            msUserSelect: 'none', /* Internet Explorer/Edge */
+          }}  className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40">
             <div className="bg-white p-6 rounded-md shadow-lg w-1/2">
               <h2 className="text-lg font-bold mb-4">Add a Note</h2>
               <p className="mb-4 text-gray-900">
@@ -490,72 +579,96 @@ const PdfViewer = ({ file, bookId }) => {
         >
           {/* Flashcards Panel */}
           <div
-  className="relative bg-white md:w-[450px] w-[280px] p-4 h-full shadow-2xl overflow-auto"
-  onClick={(e) => e.stopPropagation()} // Prevent click on flashcards panel from closing
->
-  {/* Cross Mark (Close Button) */}
-  <FaTimes
-    className="absolute top-4 left-4 mt-2 hover:text-red-800 text-red-600 cursor-pointer"
-    onClick={() => setShowFlashCards(false)}
-  />
-  <h2 className="text-2xl font-bold mt-2 mb-4 text-gray-800 text-center">Flash Cards</h2>
-  <ul>
-    {flashcards.length > 0 ? (
-      flashcards.map((flashcard, index) => (
-        <li
-          key={index}
-          className="bg-gray-100 rounded-lg shadow-md p-4 mb-4 transition-all hover:shadow-lg cursor-pointer"
-          onClick={() => {
-            setPageNumber(flashcard.pageNumber);  // Set the page number
-            setShowFlashCards(false);             // Close the flashcards panel
+          style={{
+            userSelect: 'none', /* Standard syntax */
+            WebkitUserSelect: 'none', /* Safari */
+            MozUserSelect: 'none', /* Firefox */
+            msUserSelect: 'none', /* Internet Explorer/Edge */
           }}
-        >
-          <div className="flex items-center space-x-4 mb-2">
-            <FaRegFileAlt className="text-blue-500" />
-            <p className="font-semibold text-gray-600">Selected text:</p>
+            className="relative bg-white md:w-[450px] w-[280px] p-4 h-full shadow-2xl overflow-auto"
+            onClick={(e) => e.stopPropagation()} // Prevent click on flashcards panel from closing
+          >
+            {/* Cross Mark (Close Button) */}
+            <FaTimes
+              className="absolute top-4 left-4 mt-2 hover:text-red-800 text-red-600 cursor-pointer"
+              onClick={() => setShowFlashCards(false)}
+            />
+            <h2 className="text-2xl font-bold mt-2 mb-4 text-gray-800 text-center">Flash Cards</h2>
+            <ul>
+              {flashcards.length > 0 ? (
+                flashcards.map((flashcard, index) => (
+                  <li
+                    key={index}
+                    className="bg-gray-100 rounded-lg shadow-md p-4 mb-4 transition-all hover:shadow-lg cursor-pointer"
+                    onClick={() => {
+                      setPageNumber(flashcard.pageNumber);  // Set the page number
+                      setShowFlashCards(false);             // Close the flashcards panel
+                    }}
+                  >
+                    <div className="flex items-center space-x-4 mb-2">
+                      <FaRegFileAlt className="text-blue-500" />
+                      <p className="font-semibold text-gray-600">Selected text:</p>
+                    </div>
+                    <p className="italic text-gray-700">{truncateText(flashcard.text, 15, 5)}</p>
+                    <div className="flex items-center justify-between mt-2">
+                      <div className="flex space-x-2 items-center">
+                        <FaStickyNote className="text-yellow-500" />
+                        <p className="font-semibold text-gray-600">Notes:</p>
+                        <div className="font-bold text-gray-600">{flashcard.note || "No notes"}</div>
+                      </div>
+                      <div className="text-gray-600">
+                        Page: {flashcard.pageNumber}
+                      </div>
+                    </div>
+                  </li>
+                ))
+              ) : (
+                <p className="text-center text-gray-500">No flashcards available.</p>
+              )}
+            </ul>
+            <button
+              onClick={() => setShowFlashCards(false)}
+              className="px-4 py-2 bg-blue-500 text-white rounded-full mt-4 hover:bg-blue-600 transition-colors"
+            >
+              Close Flash Cards
+            </button>
           </div>
-          <p className="italic text-gray-700">{truncateText(flashcard.text, 15, 5)}</p>
-          <div className="flex items-center justify-between mt-2">
-            <div className="flex space-x-2 items-center">
-              <FaStickyNote className="text-yellow-500" />
-              <p className="font-semibold text-gray-600">Notes:</p>
-              <div className="font-bold">{flashcard.note || "No notes"}</div>
-            </div>
-            <div className="text-gray-600">
-              Page: {flashcard.pageNumber}
-            </div>
-          </div>
-        </li>
-      ))
-    ) : (
-      <p className="text-center text-gray-500">No flashcards available.</p>
-    )}
-  </ul>
-  <button
-    onClick={() => setShowFlashCards(false)}
-    className="px-4 py-2 bg-blue-500 text-white rounded-full mt-4 hover:bg-blue-600 transition-colors"
-  >
-    Close Flash Cards
-  </button>
-</div>
 
         </div>
+        
 
         <div className="flex justify-between w-full px-4 py-2 ">
           <button
             onClick={goToPrevPage}
             className="px-4 py-2 bg-blue-500 text-white rounded"
             disabled={pageNumber <= 1}
+            style={{
+              userSelect: 'none', /* Standard syntax */
+              WebkitUserSelect: 'none', /* Safari */
+              MozUserSelect: 'none', /* Firefox */
+              msUserSelect: 'none', /* Internet Explorer/Edge */
+            }}
           >
             Previous
           </button>
-          <span className="bg-gray-300 rounded-md mt-3">
+          <span style={{
+              userSelect: 'none', /* Standard syntax */
+              WebkitUserSelect: 'none', /* Safari */
+              MozUserSelect: 'none', /* Firefox */
+              msUserSelect: 'none', /* Internet Explorer/Edge */
+            }}className="bg-gray-300 rounded-md mt-3">
             Page {pageNumber} of {numPages}
           </span>
           <button
             onClick={goToNextPage}
             className="px-4 py-2 bg-blue-500 text-white rounded"
             disabled={pageNumber >= numPages}
+            style={{
+              userSelect: 'none', /* Standard syntax */
+              WebkitUserSelect: 'none', /* Safari */
+              MozUserSelect: 'none', /* Firefox */
+              msUserSelect: 'none', /* Internet Explorer/Edge */
+            }}
           >
             Next
           </button>
