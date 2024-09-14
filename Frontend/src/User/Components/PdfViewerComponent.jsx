@@ -33,9 +33,6 @@ const PdfViewer = ({ file, bookId }) => {
   const [searchResults, setSearchResults] = useState([]);
 
 
-  const [selectedWord, setSelectedWord] = useState('');
-  const [definition, setDefinition] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
 
 // Function to handle search term input
@@ -70,26 +67,9 @@ const handleResultClick = (pageNumber) => {
   setPageNumber(pageNumber);
   setShowFlashCards(false); // Assuming you want to close flashcards panel when searching
 };
-  const fetchDefinition = async (word) => {
-    try {
-      const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
-      const data = await response.json();
-      const wordDefinition = data[0]?.meanings[0]?.definitions[0]?.definition;
 
-      // Only show modal if a definition is found
-      if (wordDefinition) {
-        setDefinition(wordDefinition);
-        setIsModalOpen(true);
-      }
-    } catch (error) {
-      console.log('Error fetching definition:', error);
-    }
-  };
 
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setDefinition('');
-  };
+
 
   useEffect(() => {
     const fetchAnnotations = async () => {
@@ -426,7 +406,7 @@ const handleResultClick = (pageNumber) => {
     <div className={`min-h-screen ${theme === 'dark' ? 'bg-gray-900 text-white' : theme === 'sepia' ? 'bg-[#f4ecd8] text-black' : 'bg-gray-100 text-black'} transition-colors duration-300`}>
 
       <div className="flex flex-row justify-between items-center p-4 bg-white shadow-md rounded-lg w-full mx-auto flex-nowrap">
-      <div className="relative w-full md:w-auto">
+        <div className="relative w-full md:w-auto">
   {/* Search Field */}
   <div className="flex items-center space-x-2 md:space-x-4 w-full">
     <input
@@ -479,26 +459,9 @@ const handleResultClick = (pageNumber) => {
             A+
           </button>
         </div> */}
-<div onMouseUp={handleTextSelection}>
-      {/* Your PDF Viewer Code */}
-      
-      {isModalOpen && (
-        <div style={{
-          userSelect: 'none', /* Standard syntax */
-          WebkitUserSelect: 'none', /* Safari */
-          MozUserSelect: 'none', /* Firefox */
-          msUserSelect: 'none', /* Internet Explorer/Edge */
-        }} className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-20" >
-          <div className="bg-white p-4 rounded shadow-lg max-w-md w-full">
-            <h3 className="text-lg font-bold">{selectedWord}</h3>
-            <p>{definition}</p>
-            <button onClick={closeModal} className="mt-4 bg-blue-500 text-white py-1 px-3 rounded">
-              Close
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
+
+
+    
         {/* Theme Controls */}
         <div className="flex items-center space-x-4">
           <button
