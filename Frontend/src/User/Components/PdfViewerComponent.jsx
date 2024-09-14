@@ -33,6 +33,9 @@ const PdfViewer = ({ file, bookId }) => {
   const [searchResults, setSearchResults] = useState([]);
 
 
+  const [selectedWord, setSelectedWord] = useState('');
+  const [definition, setDefinition] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
 
 // Function to handle search term input
@@ -67,9 +70,26 @@ const handleResultClick = (pageNumber) => {
   setPageNumber(pageNumber);
   setShowFlashCards(false); // Assuming you want to close flashcards panel when searching
 };
+  const fetchDefinition = async (word) => {
+    try {
+      const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+      const data = await response.json();
+      const wordDefinition = data[0]?.meanings[0]?.definitions[0]?.definition;
 
+      // Only show modal if a definition is found
+      if (wordDefinition) {
+        setDefinition(wordDefinition);
+        setIsModalOpen(true);
+      }
+    } catch (error) {
+      console.log('Error fetching definition:', error);
+    }
+  };
 
-
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setDefinition('');
+  };
 
   useEffect(() => {
     const fetchAnnotations = async () => {
@@ -385,7 +405,26 @@ const handleResultClick = (pageNumber) => {
 
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
+<div onMouseUp={handleTextSelection}>
+      {/* Your PDF Viewer Code */}
+      
+      {isModalOpen && (
+        <div style={{
+          userSelect: 'none', /* Standard syntax */
+          WebkitUserSelect: 'none', /* Safari */
+          MozUserSelect: 'none', /* Firefox */
+          msUserSelect: 'none', /* Internet Explorer/Edge */
+        }} className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-20" >
+          <div className="bg-white p-4 rounded shadow-lg max-w-md w-full">
+            <h3 className="text-lg font-bold">{selectedWord}</h3>
+            <p>{definition}</p>
+            <button onClick={closeModal} className="mt-4 bg-blue-500 text-white py-1 px-3 rounded">
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
 
 
   const handleThemeChange = (newTheme) => {
