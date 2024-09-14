@@ -287,16 +287,21 @@ const PdfViewer = ({ file, bookId }) => {
     if (selectionTimeout.current) {
       clearTimeout(selectionTimeout.current);
     }
-    selectionTimeout.current = setTimeout(() => {
-      handleTextSelection();
-    }, 200);
+  
+    // Using requestAnimationFrame for smoother UI updates
+    requestAnimationFrame(() => {
+      selectionTimeout.current = setTimeout(() => {
+        handleTextSelection();
+      }, 50); // Reduced delay to 50ms for faster response
+    });
   };
-
+  
   const handleMouseDown = () => {
     if (selectionTimeout.current) {
       clearTimeout(selectionTimeout.current);
     }
   };
+  
 
  
   useEffect(() => {
