@@ -224,21 +224,21 @@ const ExpandedView = () => {
           </p>
           <p className="text-base md:text-lg text-gray-600 mb-5">Usual time to read: 5 hours</p>
           <button
-  className={`mt-4 md:mt-5 py-2 px-4 bg-blue-500 text-white rounded-lg font-bold text-lg flex items-center justify-center transition-transform duration-300 ${isReadHover ? 'bg-blue-700 transform scale-105' : ''} w-full md:w-auto ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-  onClick={addToLibrary}
-  onMouseEnter={() => setIsReadHover(true)}
-  onMouseLeave={() => setIsReadHover(false)}
-  disabled={isLoading} // Disable button while loading
->
-  {isLoading ? (
-    <div className="w-6 h-6 border-4 border-t-4 border-white border-opacity-30 border-t-blue-500 rounded-full animate-spin" />
-  ) : (
-    <>
-      <FaBookOpen size={20} className="mr-2" />
-      Read
-    </>
-  )}
-</button>
+            className={`mt-4 md:mt-5 py-2 px-4 bg-blue-500 text-white rounded-lg font-bold text-lg flex items-center justify-center transition-transform duration-300 ${isReadHover ? 'bg-blue-700 transform scale-105' : ''} w-full md:w-auto ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            onClick={addToLibrary}
+            onMouseEnter={() => setIsReadHover(true)}
+            onMouseLeave={() => setIsReadHover(false)}
+            disabled={isLoading} // Disable button while loading
+          >
+            {isLoading ? (
+              <div className="w-6 h-6 border-4 border-t-4 border-white border-opacity-30 border-t-blue-500 rounded-full animate-spin" />
+            ) : (
+              <>
+                <FaBookOpen size={20} className="mr-2" />
+                Read
+              </>
+            )}
+          </button>
 
 
         </div>
