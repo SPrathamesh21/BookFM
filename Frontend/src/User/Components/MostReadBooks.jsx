@@ -11,7 +11,7 @@ function MostReadBooks() {
   const fetchBooks = useCallback(async (pageNum) => {
     setLoading(true); // Start loading animation
     try {
-      const response = await axios.get('/get-recommended-books', {
+      const response = await axios.get('/get-most-read-books', {
         params: { page: pageNum, limit: 10 }
       });
 
@@ -52,7 +52,7 @@ function MostReadBooks() {
   return (
     <div className="min-h-screen bg-gray-800 text-gray-100 p-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-bold text-teal-400">Recommended By Cabin</h1>
+        <h1 className="text-4xl font-bold text-teal-400">Most Read Books</h1>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
