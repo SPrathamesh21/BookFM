@@ -13,7 +13,6 @@ function Home() {
   const [categories, setCategories] = useState([]);
   const [userLibrary, setUserLibrary] = useState([]);
   const [favoriteBooks, setFavoriteBooks] = useState([]);
-  const [carouselCategories, setCarouselCategories] = useState({ category3D: '', category4D: '' });
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { currentUser } = useContext(AuthContext);
@@ -39,13 +38,6 @@ function Home() {
   useEffect(() => {
     fetchBooksByCategory();
   }, []);
-  // Function to randomly select a category with at least 5 books
-  const getRandomCategory = (categoriesWithCount, excludeCategory = null) => {
-    const validCategories = Object.keys(categoriesWithCount).filter(
-      (cat) => categoriesWithCount[cat] >= 5 && cat !== excludeCategory
-    );
-    return validCategories[Math.floor(Math.random() * validCategories.length)];
-  };
 
   const processBooksData = (booksData, userLibraryData, favoritesData) => {
     // Sort books
@@ -64,11 +56,6 @@ function Home() {
 
     setCategories(Object.keys(categoryCounts));
 
-    // Random categories for 3D and 4D carousels
-    const category3D = getRandomCategory(categoryCounts);
-    const category4D = getRandomCategory(categoryCounts, category3D);
-
-    setCarouselCategories({ category3D, category4D });
 
     // User Library and Favorites
     setUserLibrary(userLibraryData);
@@ -215,7 +202,7 @@ function Home() {
   }, []); 
 
   if (loading) {
-    return <div className="text-center bg-gray-800 text-gray-100">Loading...</div>;
+    return  <div className="flex justify-center items-center text-center bg-gray-800 text-gray-100 min-h-screen">Loading...</div>;
   }
 
   return (

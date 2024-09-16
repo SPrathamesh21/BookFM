@@ -35,8 +35,7 @@ const PdfViewer = ({ file, bookId }) => {
   const [selectedWord, setSelectedWord] = useState('');
   const [definition, setDefinition] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-
+  const storageKey = `pdf_${bookId}_progress_${currentUser?.userId}`;
 // Function to handle search term input
 const handleSearchChange = (e) => {
   setSearchTerm(e.target.value);
@@ -61,7 +60,6 @@ const performSearch = async () => {
       results.push({ pageNumber: i, text: text.substring(text.indexOf(searchTerm), text.indexOf(searchTerm) + 100) });
     }
   }
-  
   setSearchResults(results);
 };
 
@@ -124,7 +122,6 @@ const handleResultClick = (pageNumber) => {
                 text: highlight.text,
               });
             }
-
           });
 
           // Add notes to annotationsData
@@ -150,11 +147,8 @@ const handleResultClick = (pageNumber) => {
     fetchAnnotations();
   }, [currentUser?.userId, bookId]);
 
-
-
   useEffect(() => {
     const saveAnnotations = async () => {
-      console.log('hello from saveannotations')
       try {
         const payload = {
           userId: currentUser?.userId,
@@ -180,9 +174,30 @@ const handleResultClick = (pageNumber) => {
   //   localStorage.setItem(`${highlightsKey}_annotations`, JSON.stringify(annotations));
   // }, [highlights, annotations, highlightsKey]);
 
+  useEffect(() => {
+    const savedPage = localStorage.getItem(storageKey);
+    if (savedPage) {
+      setPageNumber(Number(savedPage));  // Set the saved page number
+    }
+  }, [storageKey]);
+
+  // Save the page number to localStorage when it changes
+  useEffect(() => {
+    console.log('pgasd', pageNumber)
+    localStorage.setItem(storageKey, pageNumber);
+  }, [pageNumber, storageKey]);
+
   const onDocumentLoadSuccess = ({ numPages }) => {
     setNumPages(numPages);
-    setPageNumber(1);
+
+    // If there's a saved page number, go to that page
+    const savedPage = localStorage.getItem(storageKey);
+    console.log('savedPafge0', savedPage)
+    if (savedPage) {
+      setPageNumber(Number(savedPage));
+    } else {
+      setPageNumber(1);  // Default to page 1 if no saved page
+    }
   };
 
   const goToNextPage = () => {
@@ -218,8 +233,6 @@ const handleResultClick = (pageNumber) => {
       window.removeEventListener('keydown', handleKeyDown);
     };
   }, [pageNumber, numPages]); // Dependencies to re-register event listener if needed
-
-
 
   const truncateText = (text, startWordCount, endWordCount) => {
     const words = text.split(" ");
@@ -303,7 +316,6 @@ const handleResultClick = (pageNumber) => {
           ...newHighlights,
         ],
       }));
-
       
       setSelectedColor("");
       setHighlightApplied(true);
@@ -374,7 +386,6 @@ const handleResultClick = (pageNumber) => {
     );
   };
 
-
   const saveNote = () => {
     const newAnnotation = { text: selectedText, note, pageNumber };
     setPostAnnotations(newAnnotation)
@@ -441,11 +452,9 @@ const handleResultClick = (pageNumber) => {
       )}
     </div>
 
-
   const handleThemeChange = (newTheme) => {
     setTheme(newTheme);
   };
-
 
   const handleCancel = () => {
     // Clear the current text selection
@@ -454,7 +463,6 @@ const handleResultClick = (pageNumber) => {
     // Close the color modal
     setShowColorModal(false);
   };
-
 
   return (
     <div className={`min-h-screen ${theme === 'dark' ? 'bg-gray-900 text-white' : theme === 'sepia' ? 'bg-[#f4ecd8] text-black' : 'bg-gray-100 text-black'} transition-colors duration-300`}>
@@ -550,8 +558,6 @@ const handleResultClick = (pageNumber) => {
         </button>
       </div>
 
-
-  
       <div
         className="relative flex flex-col items-center  p-4 pt-10 min-h-screen"
         onMouseDown={handleMouseDown}
@@ -578,7 +584,6 @@ const handleResultClick = (pageNumber) => {
 
           {renderHighlights()}
         </div>
-
 
         {showColorModal && (
           <div style={{
@@ -675,7 +680,6 @@ const handleResultClick = (pageNumber) => {
           </div>
         )}
 
-
         <div
           className={`fixed inset-0 z-50 flex justify-end bg-black bg-opacity-30 transform transition-transform duration-300 ease-in-out ${showFlashCards ? "translate-x-0" : "translate-x-full"}`}
           onClick={() => setShowFlashCards(false)} // Close when clicking outside
@@ -738,7 +742,6 @@ const handleResultClick = (pageNumber) => {
           </div>
 
         </div>
-        
 
         <div className="flex justify-between w-full px-4 py-2 ">
           <button
@@ -759,7 +762,7 @@ const handleResultClick = (pageNumber) => {
               WebkitUserSelect: 'none', /* Safari */
               MozUserSelect: 'none', /* Firefox */
               msUserSelect: 'none', /* Internet Explorer/Edge */
-            }}className="bg-gray-300 rounded-md mt-3">
+            }}className="bg-gray-300 px-4 rounded-md mt-3">
             Page {pageNumber} of {numPages}
           </span>
           <button
