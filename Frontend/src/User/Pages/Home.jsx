@@ -207,13 +207,13 @@ function Home() {
           </button>
         </section>
    
-        <div className="flex items-center justify-between">
+        <div className="flex items-center">
           <Suspense fallback={<div>Loading carousel...</div>}>
             <BookCarousel books={userLibrary.slice(0, 5)} title="Your Library" />
           </Suspense>
             <a
               onClick={() => navigate('/yourlibrary')}
-              className="text-teal-400 hover:underline text-lg font-semibold cursor-pointer"
+              className="text-teal-400 hover:underline text-lg font-semibold cursor-pointer ml-[-100px]"
             >
               See All
             </a>

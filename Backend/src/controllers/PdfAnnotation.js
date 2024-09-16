@@ -2,47 +2,56 @@ const Annotation = require('../models/PdfAnnotation');
 
 // Save annotations (both highlights and notes)
 const saveAnnotations = async (req, res) => {
- 
   const { userId, bookId, highlights, postAnnotations } = req.body;
-  // Flatten the highlights object if needed
   const flattenedHighlights = Object.values(highlights).flat();
 
   try {
-      const existingAnnotation = await Annotation.findOne({ userId, bookId });
-     
-      if (existingAnnotation) {
-          // Check if there are existing highlights and notes for this bookId and userId
-          const currentAnnotation = existingAnnotation.annotations.find(annotation => {
-              return annotation.bookId === bookId && annotation.userId === userId;
+    const existingAnnotation = await Annotation.findOne({ userId, bookId });
+
+    if (existingAnnotation) {
+      // Check if highlights or notes exist to avoid saving empty data
+      if (flattenedHighlights.length || postAnnotations.length) {
+        const currentAnnotation = existingAnnotation.annotations.find(annotation => 
+          annotation.bookId === bookId && annotation.userId === userId
+        );
+
+        if (currentAnnotation) {
+          // Update existing highlights and notes
+          currentAnnotation.highlights = flattenedHighlights;
+          currentAnnotation.notes = postAnnotations;
+        } else {
+          // Only add a new annotation if there's data to add
+          existingAnnotation.annotations.push({
+            highlights: flattenedHighlights,
+            notes: postAnnotations,
           });
+        }
 
-          if (currentAnnotation) {
-              // If found, update the highlights and notes for this annotation
-              currentAnnotation.highlights = flattenedHighlights;
-              currentAnnotation.notes = postAnnotations;
-          } else {
-              // If no existing annotation for this bookId, push a new one
-              existingAnnotation.annotations.push({ highlights: flattenedHighlights, notes: postAnnotations });
-          }
-
-          await existingAnnotation.save();
-          
-          res.status(200).json(existingAnnotation);
+        await existingAnnotation.save();
+        res.status(200).json(existingAnnotation);
       } else {
-          // Create new annotation if no entry found for this userId and bookId
-          const newAnnotation = new Annotation({
-              userId,
-              bookId,
-              annotations: [{ highlights: flattenedHighlights, notes: postAnnotations }]
-          });
-          await newAnnotation.save();
-          res.status(201).json(newAnnotation);
+        res.status(400).json({ message: 'No valid highlights or annotations to save' });
       }
+    } else {
+      // Only create a new annotation if there is data
+      if (flattenedHighlights.length || postAnnotations.length) {
+        const newAnnotation = new Annotation({
+          userId,
+          bookId,
+          annotations: [{ highlights: flattenedHighlights, notes: postAnnotations }],
+        });
+        await newAnnotation.save();
+        res.status(201).json(newAnnotation);
+      } else {
+        res.status(400).json({ message: 'No valid highlights or annotations to save' });
+      }
+    }
   } catch (error) {
-      console.error('Error saving annotations:', error);
-      res.status(500).json({ message: 'Error saving annotations', error });
+    console.error('Error saving annotations:', error);
+    res.status(500).json({ message: 'Error saving annotations', error });
   }
 };
+
 
   
 // Get annotations by userId and bookId

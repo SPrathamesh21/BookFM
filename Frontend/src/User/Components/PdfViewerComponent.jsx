@@ -31,8 +31,7 @@ const PdfViewer = ({ file, bookId }) => {
   const [postAnnotations, setPostAnnotations] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
-
-
+  const [showNoteIcon, setShowNoteIcon] = useState(false);
   const [selectedWord, setSelectedWord] = useState('');
   const [definition, setDefinition] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -42,6 +41,7 @@ const PdfViewer = ({ file, bookId }) => {
 const handleSearchChange = (e) => {
   setSearchTerm(e.target.value);
 };
+  const noteIconRef = useRef(null);
 
 // Function to perform search and store results
 const performSearch = async () => {
@@ -107,13 +107,12 @@ const handleResultClick = (pageNumber) => {
               return;
             }
 
-            // Ensure that we're mapping highlights to the correct page number from notes
-            annotation.notes.forEach((note) => {
-              const pageNum = note.pageNumber; // Get the page number from notes
+            // Ensure we map highlights to the correct page number, even without notes
+            const pageNum = highlight.pageNumber || annotation.notes[0]?.pageNumber;  // Fall back to first note if available
+            if (pageNum) {
               if (!highlightsData[pageNum]) {
                 highlightsData[pageNum] = [];
               }
-
               highlightsData[pageNum].push({
                 rect: {
                   top: highlight.rect.top,
@@ -124,7 +123,8 @@ const handleResultClick = (pageNumber) => {
                 color: highlight.color,
                 text: highlight.text,
               });
-            });
+            }
+
           });
 
           // Add notes to annotationsData
@@ -154,15 +154,17 @@ const handleResultClick = (pageNumber) => {
 
   useEffect(() => {
     const saveAnnotations = async () => {
+      console.log('hello from saveannotations')
       try {
         const payload = {
           userId: currentUser?.userId,
           bookId: bookId,
           highlights: NewHighlight,
-          postAnnotations
+          postAnnotations,
         };
         await axios.post(`/pdf/annotations/${bookId}`, payload);
         setHighlightApplied(false);
+        
       } catch (error) {
         console.error('Error saving annotations:', error);
       }
@@ -206,7 +208,6 @@ const handleResultClick = (pageNumber) => {
         break;
     }
   };
-
 
   useEffect(() => {
     // Add event listener for keydown
@@ -257,7 +258,27 @@ const handleResultClick = (pageNumber) => {
       height: (rect.height / pdfContainerRef.current.clientHeight) * 100,
     };
   };
+  const addNote = () => {
+    setNoteModalOpen(true);
+    setShowNoteIcon(false)
+  };
+  function handleClickOutside(event) {
+    if (noteIconRef.current && !noteIconRef.current.contains(event.target)) {
+      setShowNoteIcon(false);
+    }
+  }
 
+  useEffect(() => {
+    if (showNoteIcon) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showNoteIcon]);
 
   const applyHighlight = () => {
     const selection = window.getSelection();
@@ -270,11 +291,11 @@ const handleResultClick = (pageNumber) => {
       const newHighlights = highlightsForPage.map(highlight => ({
         rect: highlight,
         color: selectedColor,
-        text: selectedText, // Ensure this is set correctly
+        text: selectedText, 
+        pageNumber: pageNumber
       }));
 
       setNewHighlight(newHighlights);
-
       setHighlights(prev => ({
         ...prev,
         [pageNumber]: [
@@ -283,18 +304,14 @@ const handleResultClick = (pageNumber) => {
         ],
       }));
 
-      setNoteModalOpen(true);
+      
       setSelectedColor("");
       setHighlightApplied(true);
-
+      setShowNoteIcon(true);
       // Clear selection after applying highlight
       window.getSelection().removeAllRanges();
     }
   };
-
-
-
-
 
   const renderHighlights = () => {
     return (
@@ -392,8 +409,6 @@ const handleResultClick = (pageNumber) => {
       clearTimeout(selectionTimeout.current);
     }
   };
-
-
 
   useEffect(() => {
     const handleResize = () => {
@@ -605,7 +620,23 @@ const handleResultClick = (pageNumber) => {
           </div>
         )}
 
-
+    {showNoteIcon && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div
+            ref={noteIconRef}
+            className="p-2 bg-yellow-200 shadow-lg rounded-lg flex items-center space-x-4"
+          >
+            <FaPen
+              onClick={addNote}
+              className="cursor-pointer text-gray-500"
+            />
+            <FaTimes
+              onClick={() => setShowNoteIcon(false)}
+              className="cursor-pointer text-red-500"
+            />
+          </div>
+        </div>
+      )}
 
         {noteModalOpen && (
           <div style={{

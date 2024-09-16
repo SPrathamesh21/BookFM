@@ -15,6 +15,7 @@ const PdfAnnotationSchema = new mongoose.Schema({
           },
           color: String,
           text: String,
+          pageNumber: Number,
         }
       ],
       notes: [
