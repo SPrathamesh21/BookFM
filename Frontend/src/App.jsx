@@ -21,6 +21,7 @@ import YourLibrary from './User/Pages/YourLibrary';
 import EpubReader from './User/Pages/Example';
 import Flipbook from './User/Components/FlipBook';
 import DocumentViewer from './User/Pages/DocumentViewer';
+import RecommendedCabin from './User/Components/Recommended';
 
 
 
@@ -55,6 +56,8 @@ function App() {
         <Route path='/login' element={<Login />} />
         <Route path='/header' element={<Header />} />
         <Route path='/yourlibrary' element={<YourLibrary />} />
+        <Route path='/recommendedbycabin' element={<RecommendedCabin />} />
+
         <Route path='/inner' element={<EBookReader />} />
         <Route path='/epub' element={<EPUB />} />
         <Route path='/example' element={<EpubReader />} />

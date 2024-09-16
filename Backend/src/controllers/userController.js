@@ -25,6 +25,21 @@ exports.getBooks = async (req, res) => {
   }
 };
 
+exports.getRecommededBooks = async (req, res) => {
+  try {
+    const { page = 1, limit = 10 } = req.query;
+    const skip = (page - 1) * parseInt(limit);
+
+    // Filter for recommended books
+    const books = await Book.find({ recommendedByCabin: 'Yes' })
+                            .skip(skip)
+                            .limit(parseInt(limit));
+
+    res.status(200).json(books);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 // Controller to get a specific book by ID
 exports.getBookById = async (req, res) => {
     try {

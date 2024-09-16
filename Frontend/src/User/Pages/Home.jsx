@@ -255,12 +255,25 @@ function Home() {
           </Suspense>
         )}
 
-        {/* Recommended By Cabin */}
-        {recommendedBooks.length > 0 && (
+      <div className="flex items-center justify-between">
           <Suspense fallback={<div>Loading recommendations...</div>}>
-            <BookCarousel books={recommendedBooks} title="Recommended By Cabin" />
+            <BookCarousel
+              books={recommendedBooks}
+              title={
+                <div className="flex justify-between w-full items-center">
+                  Recommended By Cabin
+                  <button
+                  onClick={() => navigate('/recommendedbycabin')}
+                    className="ml-2 text-teal-400 hover:text-teal-600 text-sm font-semibold cursor-pointer border border-2 rounded-full border-teal-400 px-4 py-2"
+                  >
+                    See All
+                  </button>
+                </div>
+              }
+            />
           </Suspense>
-        )}
+        </div>
+
       </main>
     </div>
   );
