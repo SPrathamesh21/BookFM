@@ -37,9 +37,15 @@ exports.addToLibrary = async (req, res) => {
 
 exports.getUserLibrary = async (req, res) => {
   const { userId } = req.params;
+  const { page = 1, limit = 10 } = req.query; // Default to page 1 and limit 10
 
   try {
-    const userLibraryEntries = await UserLibrary.find({ userId }).populate('bookId');
+    const skip = (page - 1) * limit;
+    const userLibraryEntries = await UserLibrary.find({ userId })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .populate('bookId');
+    
     const books = userLibraryEntries.map(entry => entry.bookId);
 
     res.status(200).json(books);
@@ -48,3 +54,4 @@ exports.getUserLibrary = async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch user library' });
   }
 };
+

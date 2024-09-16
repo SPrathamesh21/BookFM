@@ -22,14 +22,14 @@ function RecommendedCabin() {
           const newBooks = response.data.filter(book => !existingIds.has(book._id));
           return [...prevBooks, ...newBooks];
         });
-        setHasMore(response.data.length > 0); // Check if we might have more books
+        setHasMore(response.data.length > 0); 
       } else {
         setHasMore(false);
       }
     } catch (error) {
       console.error('Failed to fetch books', error);
     } finally {
-      setLoading(false); // End loading animation
+      setLoading(false);
     }
   }, []);
 

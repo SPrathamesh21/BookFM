@@ -29,6 +29,44 @@ exports.getBooks = async (req, res) => {
   }
 };
 
+
+exports.getBooksByCategories = async (req, res) => {
+  try {
+    const { page = 1, limit = 10 } = req.query;
+    const skip = (page - 1) * parseInt(limit);
+
+    // Group books by category and only include categories with 5 or more books
+    const categoriesWithBooks = await Book.aggregate([
+      {
+        $group: {
+          _id: "$category",  // Group by category field
+          books: { $push: "$$ROOT" },  // Collect all books in each category
+          count: { $sum: 1 }  // Count the number of books in each category
+        }
+      },
+      {
+        $match: {
+          count: { $gte: 5 }  // Only include categories with 5 or more books
+        }
+      },
+      {
+        $limit: 2  // Limit the number of categories to 2
+      },
+      {
+        $project: {
+          _id: 1,
+          books: { $slice: ["$books", skip, parseInt(limit)] },  // Pagination for books within categories
+          count: 1
+        }
+      }
+    ]);
+
+    res.status(200).json(categoriesWithBooks);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 exports.getRecommededBooks = async (req, res) => {
   try {
     const { page = 1, limit = 10 } = req.query;

@@ -11,7 +11,7 @@ function ThirdCarousel() {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
   const selectedCategory = queryParams.get('category'); // Get category from query string
-
+  console.log('selected category', selectedCategory)
   const fetchBooks = useCallback(async (pageNum) => {
     setLoading(true); // Start loading animation
     try {
@@ -22,7 +22,7 @@ function ThirdCarousel() {
           category: selectedCategory // Include category in API request
         }
       });
-
+      console.log('resopnsedata', response.data)
       if (response.data.length > 0) {
         // Ensure no duplicates and append new data
         setBooks(prevBooks => {

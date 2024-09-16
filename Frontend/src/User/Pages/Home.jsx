@@ -21,7 +21,24 @@ function Home() {
     triggerOnce: true,
     threshold: 0.1,
   });
+  const [recommendedBooks, setRecommendedBooks] = useState([]);
+  const [categoriesWithBooks, setCategoriesWithBooks] = useState([]);
 
+  const fetchBooksByCategory = async () => {
+    try {
+      const response = await axios.get('/get-books-by-category', {
+        params: { page: 1, limit: 10 }
+      });
+      setCategoriesWithBooks(response.data);
+    } catch (err) {
+      console.error('Error fetching categories and books:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    fetchBooksByCategory();
+  }, []);
   // Function to randomly select a category with at least 5 books
   const getRandomCategory = (categoriesWithCount, excludeCategory = null) => {
     const validCategories = Object.keys(categoriesWithCount).filter(
@@ -86,9 +103,15 @@ function Home() {
     try {
       // Fetch new data
       const [booksResponse, userLibraryResponse, favoritesResponse] = await Promise.all([
-        axios.get('/get-books'),
-        currentUser ? axios.get(`/get-user-library/${currentUser.userId}`) : Promise.resolve({ data: [] }),
-        currentUser ? axios.get(`/get-favorites/${currentUser.userId}`) : Promise.resolve({ data: { favorites: [] } })
+        axios.get('/get-books', {
+          params: { page: 1, limit: 15 }
+        }),
+        currentUser ? axios.get(`/get-user-library/${currentUser.userId}`, {
+          params: { page: 1, limit: 15 }
+        }) : Promise.resolve({ data: [] }),
+        currentUser ? axios.get(`/get-favorites/${currentUser.userId}`, {
+          params: { page: 1, limit: 15 }
+        }) : Promise.resolve({ data: { favorites: [] } })
       ]);
 
       const booksData = booksResponse.data;
@@ -113,9 +136,15 @@ function Home() {
         try {
           // Fetch user library, favorites, and all books
           const [libraryResponse, favoritesResponse, booksResponse] = await Promise.all([
-            axios.get(`/get-user-library/${currentUser.userId}`),
-            axios.get(`/get-favorites/${currentUser.userId}`),
-            axios.get(`/get-books`)
+            axios.get(`/get-user-library/${currentUser.userId}`, {
+              params: { page: 1, limit: 15 }
+            }),
+            axios.get(`/get-favorites/${currentUser.userId}`, {
+              params: { page: 1, limit: 15 }
+            }),
+            axios.get(`/get-books`, {
+              params: { page: 1, limit: 15 }
+            })
           ]);
 
           const libraryBooks = libraryResponse.data;
@@ -170,9 +199,20 @@ function Home() {
     navigate(`/category/${category.toLowerCase()}`);
   };
 
-  const recommendedBooks = useMemo(() => {
-    return books.filter(book => book.recommendedByCabin === 'Yes');
-  }, [books]);
+  useEffect(() => {
+    const fetchRecommendedBooks = async () => {
+      try {
+        const response = await axios.get('/get-recommended-books', {
+          params: { page: 1, limit: 15 }
+        });
+        setRecommendedBooks(response.data);
+      } catch (error) {
+        console.error('Error fetching recommended books:', error);
+      }
+    };
+
+    fetchRecommendedBooks();
+  }, []); 
 
   if (loading) {
     return <div className="text-center bg-gray-800 text-gray-100">Loading...</div>;
@@ -226,7 +266,6 @@ function Home() {
           </Suspense>
         </div>
 
-
         {/* Favorites Carousel */}
         {favoriteBooks.length > 0 && (
           <Suspense fallback={<div>Loading favorites...</div>}>
@@ -234,29 +273,29 @@ function Home() {
           </Suspense>
         )}
 
-
-      <div className="flex items-center justify-between">
-          <Suspense fallback={<div>Loading 3D books...</div>}>
-            <BookCarousel
-              books={books.filter(book => book.category.includes(carouselCategories.category3D))}
-              title={
-                <div className="flex justify-between w-full items-center">
-                  {carouselCategories.category3D} Books
-                  <button
-                    onClick={() => navigate(`/ThirdCarousel?category=${carouselCategories.category3D}`)}
-                
-                    className="ml-2 text-teal-400 hover:text-teal-600 text-sm font-semibold cursor-pointer border border-2 rounded-full border-teal-400 px-4 py-2"
-                  >
-                    See All
-                  </button>
-                </div>
-              }
-            />
-          </Suspense>
+      {/* 3rd Carousel*/}
+      <div>
+      {categoriesWithBooks.map((category) => (
+        <div key={category._id} className="flex items-center justify-between">
+          <BookCarousel
+            books={category.books} 
+            title={
+              <div className="flex justify-between w-full items-center">
+                {category._id} Books  
+                <button
+                  onClick={() => navigate(`/ThirdCarousel?category=${category._id}`)}
+                  className="ml-2 text-teal-400 hover:text-teal-600 text-sm font-semibold cursor-pointer border border-2 rounded-full border-teal-400 px-4 py-2"
+                >
+                  See All
+                </button>
+              </div>
+            }
+          />
         </div>
-
-
-        <div className="flex items-center justify-between">
+      ))}
+    </div>
+        {/* 4th Carousel */}
+        {/* <div className="flex items-center justify-between">
           <Suspense fallback={<div>Loading 4D books...</div>}>
             <BookCarousel
               books={books.filter(book => book.category.includes(carouselCategories.category4D))}
@@ -273,12 +312,13 @@ function Home() {
               }
             />
           </Suspense>
-        </div>
-        
+        </div> */}
+
+        {/* Most Read Books */}
         <div className="flex items-center justify-between">
           <Suspense fallback={<div>Loading best sellers...</div>}>
             <BookCarousel
-              books={sortBooks.slice(0, 10)}
+              books={sortBooks}
               title={
                 <div className="flex justify-between w-full items-center">
                   Most-Read Books
@@ -312,7 +352,6 @@ function Home() {
             />
           </Suspense>
         </div>
-
       </main>
     </div>
   );
