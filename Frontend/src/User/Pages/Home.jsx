@@ -234,26 +234,62 @@ function Home() {
           </Suspense>
         )}
 
-        {/* 3D Books Carousel */}
-        {carouselCategories.category3D && (
+
+      <div className="flex items-center justify-between">
           <Suspense fallback={<div>Loading 3D books...</div>}>
-            <BookCarousel books={books.filter(book => book.category.includes(carouselCategories.category3D))} title={`${carouselCategories.category3D} Books`} />
+            <BookCarousel
+              books={books.filter(book => book.category.includes(carouselCategories.category3D))}
+              title={
+                <div className="flex justify-between w-full items-center">
+                  {carouselCategories.category3D} Books
+                  <button
+                    onClick={() => navigate('/ThirdCarousel')}
+                    className="ml-2 text-teal-400 hover:text-teal-600 text-sm font-semibold cursor-pointer border border-2 rounded-full border-teal-400 px-4 py-2"
+                  >
+                    See All
+                  </button>
+                </div>
+              }
+            />
           </Suspense>
-        )}
-
-        {/* 4D Books Carousel */}
-        {carouselCategories.category4D && (
+        </div>
+        <div className="flex items-center justify-between">
           <Suspense fallback={<div>Loading 4D books...</div>}>
-            <BookCarousel books={books.filter(book => book.category.includes(carouselCategories.category4D))} title={`${carouselCategories.category4D} Books`} />
+            <BookCarousel
+              books={books.filter(book => book.category.includes(carouselCategories.category3D))}
+              title={
+                <div className="flex justify-between w-full items-center">
+                  {carouselCategories.category4D} Books
+                  <button
+                    onClick={() => navigate('/ForthCaousel')}
+                    className="ml-2 text-teal-400 hover:text-teal-600 text-sm font-semibold cursor-pointer border border-2 rounded-full border-teal-400 px-4 py-2"
+                  >
+                    See All
+                  </button>
+                </div>
+              }
+            />
           </Suspense>
-        )}
-
-        {/* Best Sellers */}
-        {books.length > 0 && (
+        </div>
+        
+        <div className="flex items-center justify-between">
           <Suspense fallback={<div>Loading best sellers...</div>}>
-            <BookCarousel books={sortBooks.slice(0, 10)} title="Most-Read Books" />
+            <BookCarousel
+              books={sortBooks.slice(0, 10)}
+              title={
+                <div className="flex justify-between w-full items-center">
+                  Most-Read Books
+                  <button
+                    onClick={() => navigate('/mostreadbooks')}
+                    className="ml-2 text-teal-400 hover:text-teal-600 text-sm font-semibold cursor-pointer border border-2 rounded-full border-teal-400 px-4 py-2"
+                  >
+                    See All
+                  </button>
+                </div>
+              }
+            />
           </Suspense>
-        )}
+        </div>
 
       <div className="flex items-center justify-between">
           <Suspense fallback={<div>Loading recommendations...</div>}>
