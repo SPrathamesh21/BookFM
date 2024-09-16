@@ -84,18 +84,18 @@ function Home() {
 
   const fetchBooks = async () => {
     try {
-        // Fetch new data
-        const [booksResponse, userLibraryResponse, favoritesResponse] = await Promise.all([
-          axios.get('/get-books'),
-          currentUser ? axios.get(`/get-user-library/${currentUser.userId}`) : Promise.resolve({ data: [] }),
-          currentUser ? axios.get(`/get-favorites/${currentUser.userId}`) : Promise.resolve({ data: { favorites: [] } })
-        ]);
+      // Fetch new data
+      const [booksResponse, userLibraryResponse, favoritesResponse] = await Promise.all([
+        axios.get('/get-books'),
+        currentUser ? axios.get(`/get-user-library/${currentUser.userId}`) : Promise.resolve({ data: [] }),
+        currentUser ? axios.get(`/get-favorites/${currentUser.userId}`) : Promise.resolve({ data: { favorites: [] } })
+      ]);
 
-        const booksData = booksResponse.data;
-        const userLibraryData = userLibraryResponse.data;
-        const favoritesData = favoritesResponse.data.favorites;
+      const booksData = booksResponse.data;
+      const userLibraryData = userLibraryResponse.data;
+      const favoritesData = favoritesResponse.data.favorites;
 
-        processBooksData(booksData, userLibraryData, favoritesData);
+      processBooksData(booksData, userLibraryData, favoritesData);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
@@ -206,18 +206,26 @@ function Home() {
             Start Reading
           </button>
         </section>
-   
-        <div className="flex items-center">
+
+        <div className="flex items-center justify-between">
           <Suspense fallback={<div>Loading carousel...</div>}>
-            <BookCarousel books={userLibrary.slice(0, 5)} title="Your Library" />
+            <BookCarousel
+              books={userLibrary.slice(0, 5)}
+              title={
+                <div className="flex justify-between w-full items-center">
+                  Your Library
+                  <button
+                    onClick={() => navigate('/yourlibrary')}
+                    className="ml-2 text-teal-400 hover:text-teal-600 text-sm font-semibold cursor-pointer border border-2 rounded-full border-teal-400 px-4 py-2"
+                  >
+                    See All
+                  </button>
+                </div>
+              }
+            />
           </Suspense>
-            <a
-              onClick={() => navigate('/yourlibrary')}
-              className="text-teal-400 hover:underline text-lg font-semibold cursor-pointer ml-[-100px]"
-            >
-              See All
-            </a>
         </div>
+
 
         {/* Favorites Carousel */}
         {favoriteBooks.length > 0 && (
@@ -229,21 +237,21 @@ function Home() {
         {/* 3D Books Carousel */}
         {carouselCategories.category3D && (
           <Suspense fallback={<div>Loading 3D books...</div>}>
-            <BookCarousel books={books.filter(book => book.category.includes(carouselCategories.category3D))} title={`3D Books (${carouselCategories.category3D})`} />
+            <BookCarousel books={books.filter(book => book.category.includes(carouselCategories.category3D))} title={`${carouselCategories.category3D} Books`} />
           </Suspense>
         )}
 
         {/* 4D Books Carousel */}
         {carouselCategories.category4D && (
-            <Suspense fallback={<div>Loading 4D books...</div>}>
-            <BookCarousel books={books.filter(book => book.category.includes(carouselCategories.category4D))} title={`4D Books (${carouselCategories.category4D})`} />
+          <Suspense fallback={<div>Loading 4D books...</div>}>
+            <BookCarousel books={books.filter(book => book.category.includes(carouselCategories.category4D))} title={`${carouselCategories.category4D} Books`} />
           </Suspense>
         )}
 
         {/* Best Sellers */}
         {books.length > 0 && (
           <Suspense fallback={<div>Loading best sellers...</div>}>
-            <BookCarousel books={sortBooks.slice(0, 10)} title="Best Sellers" />
+            <BookCarousel books={sortBooks.slice(0, 10)} title="Most-Read Books" />
           </Suspense>
         )}
 
