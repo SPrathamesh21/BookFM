@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import axios from '../../../axiosConfig';
 
 function ThirdCarousel() {
@@ -7,12 +7,20 @@ function ThirdCarousel() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const selectedCategory = queryParams.get('category'); // Get category from query string
 
   const fetchBooks = useCallback(async (pageNum) => {
     setLoading(true); // Start loading animation
     try {
-      const response = await axios.get('/get-recommended-books', {
-        params: { page: pageNum, limit: 10 }
+      const response = await axios.get('/get-third-carousel', {
+        params: { 
+          page: pageNum, 
+          limit: 10,
+          category: selectedCategory // Include category in API request
+        }
       });
 
       if (response.data.length > 0) {
@@ -31,10 +39,18 @@ function ThirdCarousel() {
     } finally {
       setLoading(false); // End loading animation
     }
-  }, []);
+  }, [selectedCategory]); // Include category as a dependency
 
   useEffect(() => {
-    fetchBooks(page);
+    setBooks([]); // Reset books when category changes
+    setPage(1); // Reset page number
+    fetchBooks(1); // Fetch the first page of books for the new category
+  }, [selectedCategory, fetchBooks]); // Trigger fetching when category changes
+
+  useEffect(() => {
+    if (page > 1) {
+      fetchBooks(page);
+    }
   }, [page, fetchBooks]);
 
   const handleScroll = () => {
@@ -52,7 +68,7 @@ function ThirdCarousel() {
   return (
     <div className="min-h-screen bg-gray-800 text-gray-100 p-8">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-bold text-teal-400">Recommended By Cabin</h1>
+        <h1 className="text-4xl font-bold text-teal-400">{selectedCategory} Books</h1>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">

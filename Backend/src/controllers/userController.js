@@ -40,6 +40,26 @@ exports.getRecommededBooks = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+exports.ThirdCategory = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, category } = req.query;
+    const skip = (page - 1) * parseInt(limit);
+
+    // Find books based on query
+    const books = await Book.find({category: category})
+                            .skip(skip)
+                            .limit(parseInt(limit));
+
+    res.status(200).json(books);
+  } catch (error) {
+    
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+
 // Controller to get a specific book by ID
 exports.getBookById = async (req, res) => {
     try {

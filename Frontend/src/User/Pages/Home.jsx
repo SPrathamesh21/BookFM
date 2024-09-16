@@ -243,7 +243,8 @@ function Home() {
                 <div className="flex justify-between w-full items-center">
                   {carouselCategories.category3D} Books
                   <button
-                    onClick={() => navigate('/ThirdCarousel')}
+                    onClick={() => navigate(`/ThirdCarousel?category=${carouselCategories.category3D}`)}
+                
                     className="ml-2 text-teal-400 hover:text-teal-600 text-sm font-semibold cursor-pointer border border-2 rounded-full border-teal-400 px-4 py-2"
                   >
                     See All
@@ -253,15 +254,17 @@ function Home() {
             />
           </Suspense>
         </div>
+
+
         <div className="flex items-center justify-between">
           <Suspense fallback={<div>Loading 4D books...</div>}>
             <BookCarousel
-              books={books.filter(book => book.category.includes(carouselCategories.category3D))}
+              books={books.filter(book => book.category.includes(carouselCategories.category4D))}
               title={
                 <div className="flex justify-between w-full items-center">
                   {carouselCategories.category4D} Books
                   <button
-                    onClick={() => navigate('/ForthCaousel')}
+                   onClick={() => navigate(`/ThirdCarousel?category=${carouselCategories.category4D}`)}
                     className="ml-2 text-teal-400 hover:text-teal-600 text-sm font-semibold cursor-pointer border border-2 rounded-full border-teal-400 px-4 py-2"
                   >
                     See All

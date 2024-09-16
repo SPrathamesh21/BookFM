@@ -24,7 +24,7 @@ import DocumentViewer from './User/Pages/DocumentViewer';
 import RecommendedCabin from './User/Components/Recommended';
 import MostReadBooks from './User/Components/MostReadBooks';
 import ThirdCarousel from './User/Components/3rdCarousel';
-import ForthCaousel from './User/Components/4thCarousel';
+
 
 
 
@@ -62,7 +62,7 @@ function App() {
         <Route path='/recommendedbycabin' element={<RecommendedCabin />} />
         <Route path='/mostreadbooks' element={<MostReadBooks />} />
         <Route path='/ThirdCarousel' element={<ThirdCarousel />} />
-        <Route path='/ForthCaousel' element={<ForthCaousel />} />
+        
         <Route path='/inner' element={<EBookReader />} />
         <Route path='/epub' element={<EPUB />} />
         <Route path='/example' element={<EpubReader />} />
