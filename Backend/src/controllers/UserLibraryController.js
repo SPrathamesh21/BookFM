@@ -7,7 +7,13 @@ exports.addToLibrary = async (req, res) => {
   if (!userId || !bookId) {
     return res.status(400).json({ success: false, message: 'Invalid input data' });
   }
-  
+
+
+
+ 
+
+
+
   try {
     // Check if the book is already in the user's library
     const existingEntry = await UserLibrary.findOne({ userId, bookId });

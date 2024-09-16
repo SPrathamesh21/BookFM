@@ -1,6 +1,6 @@
 const Book = require('../models/AdminbookModel')
 const User = require('../models/User')
-const Notification = require('../models/AdminNotification'); 
+const Notification = require('../models/AdminNotification');
 
 const mongoose = require('mongoose');
 const { GridFSBucket, ObjectId } = require('mongodb');
@@ -18,7 +18,11 @@ mongoose.connection.once('open', () => {
 // Get all books
 exports.getBooks = async (req, res) => {
   try {
-    const books = await Book.find(); 
+    const { page = 1, limit = 10 } = req.query;
+    const skip = (page - 1) * parseInt(limit);
+    const books = await Book.find()
+      .skip(skip)
+      .limit(parseInt(limit));
     res.status(200).json(books);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -32,8 +36,8 @@ exports.getRecommededBooks = async (req, res) => {
 
     // Filter for recommended books
     const books = await Book.find({ recommendedByCabin: 'Yes' })
-                            .skip(skip)
-                            .limit(parseInt(limit));
+      .skip(skip)
+      .limit(parseInt(limit));
 
     res.status(200).json(books);
   } catch (error) {
@@ -41,61 +45,59 @@ exports.getRecommededBooks = async (req, res) => {
   }
 };
 
-exports.ThirdCategory = async (req, res) => {
+exports.getMostReadBooks = async (req, res) => {
   try {
-    const { page = 1, limit = 10, category } = req.query;
+    const { page = 1, limit = 10 } = req.query;
     const skip = (page - 1) * parseInt(limit);
 
-    // Find books based on query
-    const books = await Book.find({category: category})
-                            .skip(skip)
-                            .limit(parseInt(limit));
+    // Filter for books with count greater than or equal to 3 and sort by count in descending order
+    const books = await Book.find({ count: { $gte: 1 } })
+      .sort({ count: -1 })  // Sort in descending order based on count
+      .skip(skip)
+      .limit(parseInt(limit));
 
     res.status(200).json(books);
   } catch (error) {
-    
     res.status(500).json({ message: error.message });
   }
 };
-
-
 
 // Controller to get a specific book by ID
 exports.getBookById = async (req, res) => {
-    try {
-      const bookId = req.params.bookId;
-      console.log('bookId', bookId)
-      const book = await Book.findById(bookId);
-      if (!book) {
-        return res.status(404).json({ message: 'Book not found' });
-      }
-      res.json(book);
-    } catch (error) {
-      console.error('Error fetching book:', error);
-      res.status(500).json({ message: 'Server error' });
+  try {
+    const bookId = req.params.bookId;
+    console.log('bookId', bookId)
+    const book = await Book.findById(bookId);
+    if (!book) {
+      return res.status(404).json({ message: 'Book not found' });
     }
-  };
+    res.json(book);
+  } catch (error) {
+    console.error('Error fetching book:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
 
-  exports.getSearchedEbooks = async (req, res) => {
-    try {
-        const { query } = req.query;
+exports.getSearchedEbooks = async (req, res) => {
+  try {
+    const { query } = req.query;
 
-        if (!query) {
-            return res.status(400).json({ error: 'Query parameter is required' });
-        }
-
-        // Find books where the bookName or author contains the query string
-        const suggestions = await Book.find({
-            $or: [
-                { bookName: { $regex: query, $options: 'i' } },
-                { author: { $regex: query, $options: 'i' } }
-            ]
-        }).select('bookName author _id');
-
-        res.json(suggestions);
-    } catch (error) {
-        res.status(500).json({ error: 'Server Error' });
+    if (!query) {
+      return res.status(400).json({ error: 'Query parameter is required' });
     }
+
+    // Find books where the bookName or author contains the query string
+    const suggestions = await Book.find({
+      $or: [
+        { bookName: { $regex: query, $options: 'i' } },
+        { author: { $regex: query, $options: 'i' } }
+      ]
+    }).select('bookName author _id');
+
+    res.json(suggestions);
+  } catch (error) {
+    res.status(500).json({ error: 'Server Error' });
+  }
 };
 
 // Add a book to favorites
@@ -103,7 +105,7 @@ exports.addFavoriteBook = async (req, res) => {
   try {
     const { userId, bookId } = req.body;
     const user = await User.findById(userId);
-   
+
     if (!user.favorites.includes(bookId)) {
       user.favorites.push(bookId);
       await user.save();
@@ -137,8 +139,12 @@ exports.removeFavoriteBook = async (req, res) => {
 exports.getFavoriteBooks = async (req, res) => {
   try {
     const { userId } = req.params;
-    const user = await User.findById(userId).populate('favorites');
-
+    const { page = 1, limit = 10 } = req.query;
+    const skip = (page - 1) * parseInt(limit);
+    const user = await User.findById(userId)
+                                    .skip(skip)
+                                    .limit(parseInt(limit))
+                                    .populate('favorites')
     res.status(200).json({ success: true, favorites: user.favorites });
   } catch (error) {
     console.log('get favorites', error)
@@ -151,7 +157,7 @@ exports.getNotifications = async (req, res) => {
   try {
     // Find notifications associated with the user
     const notifications = await Notification.find({}).sort({ dateAdded: -1 });
-    
+
     const userNotifications = notifications.map(notification => {
       // Find the user's read status
       const readStatus = notification.readStatus.find(status => status.userId.toString() === req.user.userId.toString());
@@ -162,11 +168,27 @@ exports.getNotifications = async (req, res) => {
     });
 
     const unreadCount = userNotifications.filter(notification => !notification.read).length;
-    
+
     res.status(200).json({ notifications: userNotifications, unreadCount });
   } catch (error) {
     console.error('Failed to fetch notifications:', error);
     res.status(500).json({ error: 'Failed to fetch notifications' });
+  }
+};
+exports.ThirdCategory = async (req, res) => {
+  try {
+    const { page = 1, limit = 10, category } = req.query;
+    const skip = (page - 1) * parseInt(limit);
+
+    // Find books based on query
+    const books = await Book.find({category: category})
+                            .skip(skip)
+                            .limit(parseInt(limit));
+
+    res.status(200).json(books);
+  } catch (error) {
+    
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -185,7 +207,7 @@ exports.updateNotification = async (req, res) => {
   try {
     // Step 1: Check if the user has an existing entry in the readStatus array
     const notification = await Notification.findById(id);
-    
+
     if (!notification) {
       return res.status(404).json({ success: false, message: 'Notification not found' });
     }
@@ -251,7 +273,7 @@ exports.getEpubFile = async (req, res) => {
     // readStream.on('data', (chunk) => {
     //   console.log('Chunk received:', chunk);  // Each chunk of the binary file
     // });
-    
+
     // Handle streaming errors
     readStream.on('error', (error) => {
       console.error('Error streaming file:', error);
