@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getBookById, getBooks, getSearchedEbooks, getRecommededBooks,ThirdCategory,getMostReadBooks, getBooksByCategories, getNotifications, updateNotification, getEpubFile } = require('../controllers/userController');
+const { getBookById, getBooks, getSearchedEbooks, getRecommededBooks,ThirdCategory,getMostReadBooks, getBooksByCategories, getNotifications, updateNotification, getEpubFile, getFilteredFavoriteBooks } = require('../controllers/userController');
 const { sendOtp, verifyOtpAndSignup, resendOtp, login } = require('../controllers/otpController');
 const { authenticateToken } = require('../middleware/authMiddleware');
 
@@ -9,6 +9,7 @@ router.get('/get-recommended-books', getRecommededBooks);
 router.get('/get-third-carousel', ThirdCategory);
 router.get('/get-books-by-category', getBooksByCategories);
 router.get('/get-most-read-books', getMostReadBooks)
+router.get('/get-filtered-favorite-books/:userId', getFilteredFavoriteBooks)
 // Route to get a book by ID
 router.get('/get-book/:bookId', getBookById);
 

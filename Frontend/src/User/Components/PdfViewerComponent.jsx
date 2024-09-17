@@ -11,7 +11,9 @@ import axios from '../../../axiosConfig';
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
 
 const PdfViewer = ({ file, bookId }) => {
-  const [pageNumber, setPageNumber] = useState(1);
+  const { currentUser } = useContext(AuthContext);
+  const storageKey = `pdf_${bookId}_progress_${currentUser?.userId}`;
+  const [pageNumber, setPageNumber] = useState(localStorage.getItem(storageKey) || 1);
   const [numPages, setNumPages] = useState(null);
   const [highlights, setHighlights] = useState({});
   const [NewHighlight, setNewHighlight] = useState({});
@@ -24,7 +26,6 @@ const PdfViewer = ({ file, bookId }) => {
   const [theme, setTheme] = useState('light');
   const [flashcards, setFlashcards] = useState([]);
   const [showFlashCards, setShowFlashCards] = useState(false);
-  const { currentUser } = useContext(AuthContext);
   const pdfContainerRef = useRef(null);
   const selectionTimeout = useRef(null);
   const [highlightApplied, setHighlightApplied] = useState(false);
@@ -35,7 +36,6 @@ const PdfViewer = ({ file, bookId }) => {
   const [selectedWord, setSelectedWord] = useState('');
   const [definition, setDefinition] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const storageKey = `pdf_${bookId}_progress_${currentUser?.userId}`;
 // Function to handle search term input
 const handleSearchChange = (e) => {
   setSearchTerm(e.target.value);
@@ -133,9 +133,6 @@ const handleResultClick = (pageNumber) => {
           })));
         });
 
-        console.log('Annotations data:', annotationsData);
-        console.log('Highlights data:', highlightsData);
-
         setHighlights(highlightsData);
         setAnnotations(annotationsData);
         setFlashcards(annotationsData);
@@ -176,29 +173,29 @@ const handleResultClick = (pageNumber) => {
 
   useEffect(() => {
     const savedPage = localStorage.getItem(storageKey);
+    console.log('saved pageNumber', savedPage)
     if (savedPage) {
       setPageNumber(Number(savedPage));  // Set the saved page number
     }
   }, [storageKey]);
 
   // Save the page number to localStorage when it changes
+
+  const onDocumentLoadSuccess = ({ numPages }) => {
+    setNumPages(numPages);
+    console.log('numPage', numPages)
+    console.log('ondoc', pageNumber)
+    // Set the saved page number only if it exists and is valid
+    const savedPage = localStorage.getItem(storageKey);
+    console.log('savedpageONdoc', savedPage)
+    if (savedPage && Number(savedPage) > 0 && Number(savedPage) <= numPages) {
+      setPageNumber(Number(savedPage));
+    } 
+  };
   useEffect(() => {
     console.log('pgasd', pageNumber)
     localStorage.setItem(storageKey, pageNumber);
   }, [pageNumber, storageKey]);
-
-  const onDocumentLoadSuccess = ({ numPages }) => {
-    setNumPages(numPages);
-
-    // If there's a saved page number, go to that page
-    const savedPage = localStorage.getItem(storageKey);
-    console.log('savedPafge0', savedPage)
-    if (savedPage) {
-      setPageNumber(Number(savedPage));
-    } else {
-      setPageNumber(1);  // Default to page 1 if no saved page
-    }
-  };
 
   const goToNextPage = () => {
     if (pageNumber < numPages) {

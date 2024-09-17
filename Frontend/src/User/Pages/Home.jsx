@@ -13,6 +13,7 @@ function Home() {
   const [categories, setCategories] = useState([]);
   const [userLibrary, setUserLibrary] = useState([]);
   const [favoriteBooks, setFavoriteBooks] = useState([]);
+  const [filteredFavoriteBooks, setFilteredFavoriteBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { currentUser } = useContext(AuthContext);
@@ -201,6 +202,28 @@ function Home() {
     fetchRecommendedBooks();
   }, []); 
 
+  useEffect(() => {
+    const fetchFilteredFavoriteBooks = async () => {
+      if (currentUser && currentUser.userId) {
+        try {
+          const response = await axios.get(`/get-filtered-favorite-books/${currentUser.userId}`, {
+            params: { page: 1, limit: 15 }
+          });
+          if (response.data.success) {
+            setFilteredFavoriteBooks(response.data.favorites);
+            console.log('setefafafa', response.data.favorites)
+          } else {
+            console.error('Failed to fetch favorite books:', response.data.message);
+          }
+        } catch (error) {
+          console.error('Error fetching favorite books:', error);
+        }
+      }
+    };
+
+    fetchFilteredFavoriteBooks();
+  }, [currentUser?.userId]);
+
   if (loading) {
     return  <div className="flex justify-center items-center text-center bg-gray-800 text-gray-100 min-h-screen">Loading...</div>;
   }
@@ -254,9 +277,9 @@ function Home() {
         </div>
 
         {/* Favorites Carousel */}
-        {favoriteBooks.length > 0 && (
+        {filteredFavoriteBooks.length > 0 && (
           <Suspense fallback={<div>Loading favorites...</div>}>
-            <BookCarousel books={favoriteBooks} title="Your Favorites" />
+            <BookCarousel books={filteredFavoriteBooks} title="Your Favorites" />
           </Suspense>
         )}
 

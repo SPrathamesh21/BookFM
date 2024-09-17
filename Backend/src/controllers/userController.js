@@ -1,7 +1,7 @@
 const Book = require('../models/AdminbookModel')
 const User = require('../models/User')
 const Notification = require('../models/AdminNotification');
-
+const UserLibrary = require('../models/UserLibrary');
 const mongoose = require('mongoose');
 const { GridFSBucket, ObjectId } = require('mongodb');
 
@@ -190,6 +190,73 @@ exports.getFavoriteBooks = async (req, res) => {
   }
 };
 
+
+exports.getFilteredFavoriteBooks = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { page = 1, limit = 10 } = req.query;
+    const skip = (page - 1) * parseInt(limit);
+    const users = await User.findById(userId)
+    console.log('users', users)
+    // Fetch the user and populate their favorites
+    const user = await User.findById(userId).populate({
+      path: 'favorites',
+      options: {
+        skip: skip,
+        limit: parseInt(limit),
+      }
+    });
+    console.log('userIDD', user)
+    if (!user || !user.favorites) {
+      console.log('sdfklsjdf')
+      return res.status(404).json({ success: false, message: 'User or favorites not found.' });
+    }
+
+    // Fetch all books to count categories
+    const allBooks = await Book.find();
+
+    // Count books in each category
+    const categoryCounts = {};
+    allBooks.forEach(book => {
+      const categories = Array.isArray(book.category) ? book.category : [book.category];
+      categories.forEach(cat => {
+        categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
+      });
+    });
+
+    // Filter favorite books that are in the user library
+    const userLibrary = await UserLibrary.find({ userId }).populate('bookId');
+    const libraryBookIds = userLibrary.map(entry => entry.bookId._id.toString());
+
+    const filteredFavoriteBooks = user.favorites.filter(book =>
+      libraryBookIds.includes(book._id.toString())
+    );
+
+    // Only include books from categories with at least 5 books in the books model
+    const filteredBooksByCategory = filteredFavoriteBooks.filter(book => {
+      const categories = Array.isArray(book.category) ? book.category : [book.category];
+      return categories.some(cat => categoryCounts[cat] >= 5);
+    });
+
+    // Ensure there are at least 2 different categories in favorites
+    const categoriesInFavorites = new Set(
+      filteredBooksByCategory.flatMap(book => {
+        const categories = Array.isArray(book.category) ? book.category : [book.category];
+        return categories;
+      })
+    );
+
+    if (categoriesInFavorites.size >= 2) {
+      res.status(200).json({ success: true, favorites: filteredBooksByCategory });
+    } else {
+      res.status(200).json({ success: true, favorites: [] });
+    }
+
+  } catch (error) {
+    console.error('Error fetching favorite books:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch favorite books.', error });
+  }
+};
 // Controller to get notification data
 exports.getNotifications = async (req, res) => {
   try {
@@ -213,6 +280,7 @@ exports.getNotifications = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch notifications' });
   }
 };
+
 exports.ThirdCategory = async (req, res) => {
   try {
     const { page = 1, limit = 10, category } = req.query;
