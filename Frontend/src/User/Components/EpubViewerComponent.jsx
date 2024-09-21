@@ -348,7 +348,7 @@ const EpubViewerComponent = ({ file, bookId }) => {
   }, [showNoteIcon]);
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen p-4 bg-gray-100">
+    <div className="flex flex-col items-center justify-center  p-4 bg-gray-100">
       <div className="flex flex-row justify-between items-center p-4 bg-white shadow-md rounded-lg mb-4 w-full mx-auto flex-nowrap">
         {/* Font Size Controls */}
         <div className="flex items-center space-x-4">
@@ -402,7 +402,7 @@ const EpubViewerComponent = ({ file, bookId }) => {
       </div>
 
       {fileData && (
-        <div className="w-full h-[80vh] md:h-4/5 relative rounded-lg overflow-hidden">
+        <div className="w-full h-[100vh]  relative rounded-lg overflow-hidden">
         {/* Container for ReactReader and current page number */}
         <div className="relative w-full h-full">
           <ReactReader
