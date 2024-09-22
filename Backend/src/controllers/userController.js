@@ -104,7 +104,7 @@ exports.getMostReadBooks = async (req, res) => {
 exports.getBookById = async (req, res) => {
   try {
     const bookId = req.params.bookId;
-    console.log('bookId', bookId)
+ 
     const book = await Book.findById(bookId);
     if (!book) {
       return res.status(404).json({ message: 'Book not found' });
@@ -190,14 +190,12 @@ exports.getFavoriteBooks = async (req, res) => {
   }
 };
 
-
 exports.getFilteredFavoriteBooks = async (req, res) => {
   try {
     const { userId } = req.params;
     const { page = 1, limit = 10 } = req.query;
     const skip = (page - 1) * parseInt(limit);
     const users = await User.findById(userId)
-    console.log('users', users)
     // Fetch the user and populate their favorites
     const user = await User.findById(userId).populate({
       path: 'favorites',
@@ -206,9 +204,9 @@ exports.getFilteredFavoriteBooks = async (req, res) => {
         limit: parseInt(limit),
       }
     });
-    console.log('userIDD', user)
+
     if (!user || !user.favorites) {
-      console.log('sdfklsjdf')
+      console.log('users favorite not found on filtered favorite books')
       return res.status(404).json({ success: false, message: 'User or favorites not found.' });
     }
 
@@ -297,9 +295,6 @@ exports.ThirdCategory = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
-// Controller to update the read status of a notification
-// controllers/notificationController.js
 
 exports.updateNotification = async (req, res) => {
   const { id } = req.params;  // Notification ID

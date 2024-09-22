@@ -25,11 +25,9 @@ app.use(cors({
 
 app.use(cookieParser());
 
-
 // Middleware
 app.use(bodyParser.json({ limit: '100mb' })); // Adjust as needed
 app.use(bodyParser.urlencoded({ limit: '100mb', extended: true }));
-
 
 // Routes
 app.use('/api/books', bookRoutes);

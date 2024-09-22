@@ -225,7 +225,14 @@ function Home() {
   }, [currentUser?.userId]);
 
   if (loading) {
-    return  <div className="flex justify-center items-center text-center bg-gray-800 text-gray-100 min-h-screen">Loading...</div>;
+    return  (
+      <div className="loading-container bg-gray-800 flex justify-center items-center text-center min-h-screen">
+  <div>
+    <div className="w-12 h-12 border-4 border-t-4 border-white border-opacity-60 border-t-teal-500 rounded-full animate-spin"></div>
+    <p className="text-white mt-4">Loading...</p>
+  </div>
+</div>
+);
   }
 
   return (

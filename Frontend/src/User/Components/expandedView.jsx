@@ -246,7 +246,7 @@ const ExpandedView = () => {
             disabled={isLoading} // Disable button while loading
           >
             {isLoading ? (
-              <div className="w-6 h-6 border-4 border-t-4 border-white border-opacity-30 border-t-blue-500 rounded-full animate-spin" />
+              <div className="w-6 h-6 border-4 border-t-4 border-white border-opacity-60 border-t-teal-500 rounded-full animate-spin" />
             ) : (
               <>
                 <FaBookOpen size={20} className="mr-2" />
